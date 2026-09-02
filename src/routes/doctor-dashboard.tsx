@@ -32,6 +32,8 @@ import {
   Edit3,
   MessageSquare,
   Menu,
+  History,
+  Check,
 } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import {
@@ -42,22 +44,21 @@ import {
   savePrescriptionToSupabase,
   scheduleFollowupInSupabase,
   logoutDoctorFromSupabase,
+  fetchClinicalNotesFromSupabase,
+  saveTreatmentRecordToSupabase,
+  fetchPrescriptionHistoryFromSupabase,
+  fetchFollowupsFromSupabase,
+  fetchAppointmentHistoryFromSupabase,
+  fetchMedicalReportsFromSupabase,
+  fetchPatientTimelineFromSupabase,
+  updateAppointmentStatusInSupabase,
 } from "@/lib/clinicalService";
 import {
   getStoredPatients,
   saveStoredPatients,
   getStoredAppointments,
   saveStoredAppointments,
-  getStoredClinicalNotes,
-  saveStoredClinicalNote,
-  getStoredPrescription,
-  saveStoredPrescription,
-  getStoredTreatmentRecords,
-  saveStoredTreatmentRecords,
   getStoredMedicalReports,
-  saveStoredMedicalReports,
-  getStoredTimeline,
-  addStoredTimelineEvent,
   type PatientRecord,
   type AppointmentRecord,
   type ClinicalNoteRecord,
@@ -89,7 +90,7 @@ function DoctorDashboardPage() {
     navigate({ to: "/doctor-login" });
   };
 
-  // Main Data States loaded from Storage
+  // Main Data States loaded from Supabase
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>([]);
@@ -109,14 +110,31 @@ function DoctorDashboardPage() {
 
   // Selected Patient Modal State
   const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
-  const [activeModalTab, setActiveModalTab] = useState<"clinical" | "rx" | "timeline" | "followup">(
-    "clinical",
-  );
+  const [activeModalTab, setActiveModalTab] = useState<
+    "overview" | "clinical" | "treatment" | "rx" | "apts" | "reports" | "followup" | "timeline"
+  >("overview");
 
-  // Clinical Notes Form State
+  // Patient Detail Collections Loaded from Supabase
+  const [patientNotesList, setPatientNotesList] = useState<ClinicalNoteRecord[]>([]);
+  const [patientTreatmentsList, setPatientTreatmentsList] = useState<TreatmentHistoryRecord[]>([]);
+  const [patientRxList, setPatientRxList] = useState<PrescriptionRecord[]>([]);
+  const [patientAptsList, setPatientAptsList] = useState<AppointmentRecord[]>([]);
+  const [patientReportsList, setPatientReportsList] = useState<MedicalReportRecord[]>([]);
+  const [patientFollowupsList, setPatientFollowupsList] = useState<any[]>([]);
+  const [patientTimelineList, setPatientTimelineList] = useState<TimelineEvent[]>([]);
+
+  // Form States for Clinical Record Entry
   const [diagnosis, setDiagnosis] = useState("");
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [observations, setObservations] = useState("");
+  const [isEditingNote, setIsEditingNote] = useState(false);
+
+  // New Treatment Entry Form State
+  const [trtName, setTrtName] = useState("");
+  const [trtDiagnosis, setTrtDiagnosis] = useState("");
+  const [trtDate, setTrtDate] = useState("2026-09-02");
+  const [trtStatus, setTrtStatus] = useState("Completed");
+  const [trtNotes, setTrtNotes] = useState("");
 
   // Prescription Form State
   const [medicines, setMedicines] = useState<PrescriptionItem[]>([]);
@@ -137,14 +155,14 @@ function DoctorDashboardPage() {
   // Toast Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Load Data on Mount & when Storage changes
+  // Load Main Dashboard Data on Mount
   const loadData = async () => {
     setLoadingData(true);
     try {
       const pData = await fetchPatientsFromSupabase();
       const aData = await fetchTodaysAppointmentsFromSupabase();
       const tData = await fetchTreatmentRecordsFromSupabase();
-      const rData = getStoredMedicalReports();
+      const rData = await fetchMedicalReportsFromSupabase();
 
       setPatients(pData);
       setAppointments(aData);
@@ -179,10 +197,10 @@ function DoctorDashboardPage() {
     });
   };
 
-  // Calculate Dynamic Dashboard Counts from Actual Stored Data
+  // Dynamic Dashboard Counts
   const stats = useMemo(() => {
     const totalPatients = patients.length;
-    const todayStr = "2026-09-02"; // Reference date
+    const todayStr = "2026-09-02";
     const todaysApts = appointments.filter((a) => a.date === todayStr).length;
 
     const currentMonthPrefix = "2026-09";
@@ -200,7 +218,7 @@ function DoctorDashboardPage() {
     };
   }, [patients, appointments, reports]);
 
-  // Today's Appointments (Filtered & Chronological)
+  // Today's Appointments (Chronological)
   const todaysSchedule = useMemo(() => {
     const todayStr = "2026-09-02";
     return appointments
@@ -208,7 +226,7 @@ function DoctorDashboardPage() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments]);
 
-  // Recently Registered Patients (Sorted newest registration date first)
+  // Recently Registered Patients
   const recentlyRegistered = useMemo(() => {
     return [...patients]
       .sort(
@@ -253,29 +271,48 @@ function DoctorDashboardPage() {
     });
   }, [patients, searchQuery, statusFilter, dateFilter]);
 
-  // OPEN PATIENT MODAL & LOAD PATIENT DATA
-  const handleOpenPatientModal = (patient: PatientRecord) => {
+  // OPEN PATIENT CLINICAL PROFILE MODAL & LOAD ALL SUPABASE COLLECTIONS
+  const handleOpenPatientModal = async (patient: PatientRecord) => {
     setSelectedPatient(patient);
-    setActiveModalTab("clinical");
+    setActiveModalTab("overview");
 
-    // Load existing clinical notes
-    const existingNote = getStoredClinicalNotes(patient.id);
-    if (existingNote) {
-      setDiagnosis(existingNote.diagnosis);
-      setTreatmentNotes(existingNote.treatmentNotes);
-      setObservations(existingNote.observations);
+    // Fetch collections for selected patient from Supabase
+    const [cNotes, tRecs, rxRecs, aptRecs, repRecs, fUps, tLine] = await Promise.all([
+      fetchClinicalNotesFromSupabase(patient.id),
+      fetchTreatmentRecordsFromSupabase(patient.id),
+      fetchPrescriptionHistoryFromSupabase(patient.id),
+      fetchAppointmentHistoryFromSupabase(patient.id),
+      fetchMedicalReportsFromSupabase(patient.id),
+      fetchFollowupsFromSupabase(patient.id),
+      fetchPatientTimelineFromSupabase(patient.id),
+    ]);
+
+    setPatientNotesList(cNotes);
+    setPatientTreatmentsList(tRecs);
+    setPatientRxList(rxRecs);
+    setPatientAptsList(aptRecs);
+    setPatientReportsList(repRecs);
+    setPatientFollowupsList(fUps);
+    setPatientTimelineList(tLine);
+
+    // Load active notes form values
+    if (cNotes.length > 0) {
+      setDiagnosis(cNotes[0].diagnosis);
+      setTreatmentNotes(cNotes[0].treatmentNotes);
+      setObservations(cNotes[0].observations);
+      setIsEditingNote(false);
     } else {
       setDiagnosis(`Dental caries in ${patient.treatment.toLowerCase()}`);
       setTreatmentNotes(
         `Examination completed. Recommended treatment plan for ${patient.treatment}.`,
       );
       setObservations("Patient advised to maintain regular oral hygiene.");
+      setIsEditingNote(true);
     }
 
-    // Load existing prescription
-    const existingRx = getStoredPrescription(patient.id);
-    if (existingRx) {
-      setMedicines(existingRx.medicines);
+    // Load active prescription form values
+    if (rxRecs.length > 0 && rxRecs[0].medicines.length > 0) {
+      setMedicines(rxRecs[0].medicines);
     } else {
       setMedicines([
         {
@@ -309,11 +346,39 @@ function DoctorDashboardPage() {
       observations,
     });
 
-    await loadData();
-    showToast(`Clinical Notes saved for ${selectedPatient.name}`);
+    // Refresh clinical notes list
+    const updatedNotes = await fetchClinicalNotesFromSupabase(selectedPatient.id);
+    setPatientNotesList(updatedNotes);
+    setIsEditingNote(false);
+    showToast(`Clinical Note saved for ${selectedPatient.name}`);
   };
 
-  // ADD MEDICINE TO PRESCRIPTION DRAFT
+  // SAVE NEW TREATMENT RECORD
+  const handleSaveTreatment = async () => {
+    if (!selectedPatient) return;
+    if (!trtName.trim()) {
+      alert("Please enter a treatment name");
+      return;
+    }
+
+    await saveTreatmentRecordToSupabase({
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.name,
+      treatment: trtName,
+      diagnosis: trtDiagnosis || diagnosis || "General Consultation",
+      treatmentDate: trtDate,
+      status: trtStatus,
+      notes: trtNotes,
+    });
+
+    const updatedTrts = await fetchTreatmentRecordsFromSupabase(selectedPatient.id);
+    setPatientTreatmentsList(updatedTrts);
+    setTrtName("");
+    setTrtNotes("");
+    showToast(`Treatment record saved for ${selectedPatient.name}`);
+  };
+
+  // ADD MEDICINE TO DRAFT PRESCRIPTION
   const handleAddMedicine = () => {
     if (!medName.trim()) {
       alert("Please enter a medicine name");
@@ -355,17 +420,22 @@ function DoctorDashboardPage() {
       notes: observations,
     });
 
-    await loadData();
+    const updatedRx = await fetchPrescriptionHistoryFromSupabase(selectedPatient.id);
+    setPatientRxList(updatedRx);
     showToast(`Prescription saved for ${selectedPatient.name}`);
   };
 
-  // UPDATE APPOINTMENT STATUS
-  const handleUpdateAppointmentStatus = (aptId: string, newStatus: AppointmentRecord["status"]) => {
+  // UPDATE APPOINTMENT STATUS WORKFLOW
+  const handleUpdateAppointmentStatus = async (
+    aptId: string,
+    newStatus: AppointmentRecord["status"],
+  ) => {
+    await updateAppointmentStatusInSupabase(aptId, newStatus);
+
     const updatedApts = appointments.map((a) => (a.id === aptId ? { ...a, status: newStatus } : a));
     setAppointments(updatedApts);
     saveStoredAppointments(updatedApts);
 
-    // Also update patient status if selected
     if (selectedPatient) {
       const updatedPatients = patients.map((p) =>
         p.id === selectedPatient.id
@@ -384,7 +454,7 @@ function DoctorDashboardPage() {
       saveStoredPatients(updatedPatients);
     }
 
-    showToast(`Status updated to "${newStatus}"`);
+    showToast(`Appointment status updated to "${newStatus}"`);
   };
 
   // SCHEDULE FOLLOW-UP
@@ -398,7 +468,8 @@ function DoctorDashboardPage() {
       purpose: followupPurpose,
     });
 
-    await loadData();
+    const updatedFups = await fetchFollowupsFromSupabase(selectedPatient.id);
+    setPatientFollowupsList(updatedFups);
     showToast(`Follow-up scheduled for ${selectedPatient.name} on ${formatDate(followupDate)}`);
   };
 
@@ -619,10 +690,16 @@ function DoctorDashboardPage() {
           </div>
         )}
 
-        {/* DYNAMIC CONTENT SWITCHER BASED ON ACTIVE SIDEBAR TAB */}
+        {/* DYNAMIC CONTENT SWITCHER */}
         <main className="flex-1 p-5 sm:p-8 lg:p-10 space-y-8 max-w-[1360px] mx-auto w-full">
+          {loadingData && (
+            <div className="flex items-center justify-center p-12 text-xs font-semibold text-muted-foreground animate-pulse">
+              Loading clinical data from Supabase...
+            </div>
+          )}
+
           {/* TAB 1: DASHBOARD OVERVIEW */}
-          {activeTab === "dashboard" && (
+          {!loadingData && activeTab === "dashboard" && (
             <>
               {/* TOP STATS CARDS */}
               <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -855,7 +932,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 2: PATIENT REGISTRY */}
-          {activeTab === "patients" && (
+          {!loadingData && activeTab === "patients" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -1020,7 +1097,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 3: TODAY'S SCHEDULE */}
-          {activeTab === "appointments" && (
+          {!loadingData && activeTab === "appointments" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1046,7 +1123,7 @@ function DoctorDashboardPage() {
                       <th className="py-3.5 px-4">Treatment</th>
                       <th className="py-3.5 px-4 max-w-[260px]">Reason for Visit</th>
                       <th className="py-3.5 px-4">Phone</th>
-                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4">Status Workflow</th>
                       <th className="py-3.5 px-4 text-center">Action</th>
                     </tr>
                   </thead>
@@ -1068,7 +1145,7 @@ function DoctorDashboardPage() {
                             {apt.treatment}
                           </td>
                           <td className="py-3.5 px-4 text-muted-foreground max-w-[260px] truncate">
-                            {apt.reasonForVisit || "Routine consultation"}
+                            "{apt.reasonForVisit || "Routine consultation"}"
                           </td>
                           <td className="py-3.5 px-4 font-mono text-muted-foreground">
                             {apt.phone}
@@ -1106,7 +1183,6 @@ function DoctorDashboardPage() {
                             <button
                               onClick={() => {
                                 if (pRecord) handleOpenPatientModal(pRecord);
-                                else showToast("Loading patient details...");
                               }}
                               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors shadow-xs"
                             >
@@ -1123,7 +1199,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 4: TREATMENT RECORDS */}
-          {activeTab === "records" && (
+          {!loadingData && activeTab === "records" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1131,7 +1207,7 @@ function DoctorDashboardPage() {
                     Treatment Records
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Historical record of completed treatments & diagnoses
+                    Historical record of completed procedures & clinical treatments
                   </p>
                 </div>
                 <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand">
@@ -1199,7 +1275,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 5: MEDICAL REPORTS */}
-          {activeTab === "reports" && (
+          {!loadingData && activeTab === "reports" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1277,7 +1353,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 6: CLINIC SETTINGS */}
-          {activeTab === "settings" && (
+          {!loadingData && activeTab === "settings" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <h2 className="font-display text-xl font-bold text-foreground">
                 Clinic Settings & System Management
@@ -1333,10 +1409,10 @@ function DoctorDashboardPage() {
         </main>
       </div>
 
-      {/* DETAILED PATIENT CLINICAL PROFILE MODAL */}
+      {/* DETAILED PATIENT CLINICAL PROFILE MODAL (EXPANDED WORKFLOW) */}
       {selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-3xl overflow-hidden rounded-[28px] border border-border bg-white shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl overflow-hidden rounded-[28px] border border-border bg-white shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[92vh]">
             {/* Modal Top Header Bar */}
             <div className="flex items-center justify-between bg-[linear-gradient(135deg,#3155D9_0%,#4F36DD_50%,#6B35D9_100%)] p-6 text-white shrink-0">
               <div className="flex items-center gap-3.5">
@@ -1376,125 +1452,205 @@ function DoctorDashboardPage() {
             </div>
 
             {/* Modal Internal Navigation Tabs */}
-            <div className="flex border-b border-border bg-slate-50 px-6 pt-3 gap-2 text-xs font-semibold overflow-x-auto shrink-0">
+            <div className="flex border-b border-border bg-slate-50 px-6 pt-3 gap-1 text-xs font-semibold overflow-x-auto shrink-0">
+              <button
+                onClick={() => setActiveModalTab("overview")}
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
+                  activeModalTab === "overview"
+                    ? "border-brand text-brand font-bold bg-white rounded-t-xl"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" /> Overview
+              </button>
+
               <button
                 onClick={() => setActiveModalTab("clinical")}
-                className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
                   activeModalTab === "clinical"
                     ? "border-brand text-brand font-bold bg-white rounded-t-xl"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Stethoscope className="h-4 w-4" /> Clinical Profile & Notes
+                <Stethoscope className="h-3.5 w-3.5" /> Clinical Notes
+              </button>
+
+              <button
+                onClick={() => setActiveModalTab("treatment")}
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
+                  activeModalTab === "treatment"
+                    ? "border-brand text-brand font-bold bg-white rounded-t-xl"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FolderHeart className="h-3.5 w-3.5" /> Treatment
               </button>
 
               <button
                 onClick={() => setActiveModalTab("rx")}
-                className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
                   activeModalTab === "rx"
                     ? "border-brand text-brand font-bold bg-white rounded-t-xl"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <FileText className="h-4 w-4" /> Medication & Prescription
+                <FileText className="h-3.5 w-3.5" /> Prescriptions
               </button>
 
               <button
-                onClick={() => setActiveModalTab("timeline")}
-                className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
-                  activeModalTab === "timeline"
+                onClick={() => setActiveModalTab("apts")}
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
+                  activeModalTab === "apts"
                     ? "border-brand text-brand font-bold bg-white rounded-t-xl"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Activity className="h-4 w-4" /> Patient Timeline
+                <History className="h-3.5 w-3.5" /> Appointments
+              </button>
+
+              <button
+                onClick={() => setActiveModalTab("reports")}
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
+                  activeModalTab === "reports"
+                    ? "border-brand text-brand font-bold bg-white rounded-t-xl"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileCheck2 className="h-3.5 w-3.5" /> Reports
               </button>
 
               <button
                 onClick={() => setActiveModalTab("followup")}
-                className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
                   activeModalTab === "followup"
                     ? "border-brand text-brand font-bold bg-white rounded-t-xl"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Calendar className="h-4 w-4" /> Schedule Follow-up
+                <Calendar className="h-3.5 w-3.5" /> Follow-ups
+              </button>
+
+              <button
+                onClick={() => setActiveModalTab("timeline")}
+                className={`flex items-center gap-1.5 py-2.5 px-3.5 border-b-2 transition-all ${
+                  activeModalTab === "timeline"
+                    ? "border-brand text-brand font-bold bg-white rounded-t-xl"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Activity className="h-3.5 w-3.5" /> Timeline
               </button>
             </div>
 
-            {/* MODAL BODY (SCROLLABLE) */}
+            {/* MODAL BODY */}
             <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1">
-              {/* MODAL TAB 1: CLINICAL PROFILE & NOTES */}
-              {activeModalTab === "clinical" && (
+              {/* TAB 1: OVERVIEW */}
+              {activeModalTab === "overview" && (
                 <div className="space-y-6">
-                  {/* REASON FOR VISIT CALLOUT BANNER */}
+                  {/* REASON FOR VISIT BANNER */}
                   <div className="rounded-2xl border border-brand-purple/30 bg-soft-purple/40 p-4">
                     <div className="flex items-center gap-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
                       <MessageSquare className="h-4 w-4" /> REASON FOR VISIT / DENTAL CONCERN
                     </div>
                     <p className="mt-2 text-sm font-semibold text-foreground">
-                      "{selectedPatient.reasonForVisit || "Routine dental checkup and examination."}
+                      "
+                      {selectedPatient.reasonForVisit ||
+                        "Tooth pain in lower right molar for the past 3 days."}
                       "
                     </p>
                   </div>
 
-                  {/* INFORMATION GRID */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Contact Info */}
-                    <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4">
-                      <h4 className="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5" /> Contact Information
+                    {/* Patient Information */}
+                    <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2 text-xs">
+                      <h4 className="font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" /> Patient Demographics
                       </h4>
-                      <div className="mt-3 space-y-2 text-xs">
-                        <p className="flex items-center gap-2 text-foreground">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-mono font-medium">{selectedPatient.phone}</span>
+                      <div className="space-y-1.5 pt-1">
+                        <p>
+                          <span className="text-muted-foreground">Full Name:</span>{" "}
+                          <span className="font-bold text-foreground">{selectedPatient.name}</span>
                         </p>
-                        <p className="flex items-center gap-2 text-foreground">
-                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-medium">{selectedPatient.email}</span>
+                        <p>
+                          <span className="text-muted-foreground">Code:</span>{" "}
+                          <span className="font-mono font-bold text-brand">
+                            {selectedPatient.id}
+                          </span>
                         </p>
-                        <p className="flex items-center gap-2 text-foreground">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="font-medium">{selectedPatient.address}</span>
+                        <p>
+                          <span className="text-muted-foreground">Age / Gender:</span>{" "}
+                          <span className="font-medium text-foreground">
+                            {selectedPatient.age} yrs / {selectedPatient.gender}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Phone:</span>{" "}
+                          <span className="font-mono font-medium text-foreground">
+                            {selectedPatient.phone}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Email:</span>{" "}
+                          <span className="font-medium text-foreground">
+                            {selectedPatient.email || "No email"}
+                          </span>
                         </p>
                       </div>
                     </div>
 
-                    {/* Registration Info */}
-                    <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4">
-                      <h4 className="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" /> Registration Info
+                    {/* Medical History & Allergies */}
+                    <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2 text-xs">
+                      <h4 className="font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
+                        <AlertCircle className="h-3.5 w-3.5" /> Clinical Alerts & History
                       </h4>
-                      <div className="mt-3 space-y-2 text-xs">
-                        <div className="flex justify-between border-b border-border/50 pb-1.5">
-                          <span className="text-muted-foreground">Registration Date:</span>
-                          <span className="font-bold text-foreground">
+                      <div className="space-y-1.5 pt-1">
+                        <p>
+                          <span className="text-muted-foreground">Medical History:</span>{" "}
+                          <span className="font-semibold text-foreground">
+                            {selectedPatient.medicalHistory || "No records available"}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Allergies:</span>{" "}
+                          <span className="font-semibold text-rose-600">
+                            {selectedPatient.allergies || "None reported"}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Registration Date:</span>{" "}
+                          <span className="font-medium text-foreground">
                             {formatDate(selectedPatient.registrationDate)}
                           </span>
-                        </div>
-                        <div className="flex justify-between border-b border-border/50 pb-1.5">
-                          <span className="text-muted-foreground">Registration Time:</span>
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Latest Diagnosis:</span>{" "}
                           <span className="font-medium text-foreground">
-                            {selectedPatient.registrationTime || "09:30 AM"}
+                            {patientNotesList[0]?.diagnosis || "No records available"}
                           </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Patient Category:</span>
-                          <span className="font-bold text-brand-purple">
-                            {selectedPatient.patientType}
-                          </span>
-                        </div>
+                        </p>
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
 
-                  {/* DOCTOR CLINICAL NOTES ENTRY */}
+              {/* TAB 2: CLINICAL NOTES */}
+              {activeModalTab === "clinical" && (
+                <div className="space-y-6">
                   <div className="rounded-2xl border border-border/80 bg-white p-5 space-y-4 shadow-xs">
-                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Stethoscope className="h-4 w-4 text-brand" /> DOCTOR CLINICAL NOTES &
-                      FINDINGS
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                        <Stethoscope className="h-4 w-4 text-brand" /> DOCTOR CLINICAL NOTES &
+                        DIAGNOSIS
+                      </h4>
+                      <button
+                        onClick={() => setIsEditingNote(!isEditingNote)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />{" "}
+                        {isEditingNote ? "Cancel Edit" : "Edit Note"}
+                      </button>
+                    </div>
 
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
@@ -1503,9 +1659,10 @@ function DoctorDashboardPage() {
                       <textarea
                         rows={2}
                         value={diagnosis}
+                        disabled={!isEditingNote}
                         onChange={(e) => setDiagnosis(e.target.value)}
-                        placeholder="Enter diagnosis, e.g. Dental caries in lower right molar..."
-                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand focus:bg-white resize-none"
+                        placeholder="Enter diagnosis details..."
+                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand disabled:opacity-80 resize-none"
                       />
                     </div>
 
@@ -1516,36 +1673,182 @@ function DoctorDashboardPage() {
                       <textarea
                         rows={2}
                         value={treatmentNotes}
+                        disabled={!isEditingNote}
                         onChange={(e) => setTreatmentNotes(e.target.value)}
-                        placeholder="Enter treatment performed or proposed plan..."
-                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand focus:bg-white resize-none"
+                        placeholder="Enter treatment plan..."
+                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand disabled:opacity-80 resize-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-semibold text-foreground mb-1">
-                        Additional Observations & Patient Advice
+                        Additional Observations
                       </label>
                       <input
                         type="text"
                         value={observations}
+                        disabled={!isEditingNote}
                         onChange={(e) => setObservations(e.target.value)}
-                        placeholder="Oral hygiene advice, follow-up notes..."
-                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand focus:bg-white"
+                        placeholder="Observations..."
+                        className="w-full rounded-xl border border-border bg-slate-50 p-3 text-xs font-medium text-foreground outline-none focus:border-brand disabled:opacity-80"
                       />
                     </div>
 
-                    <button
-                      onClick={handleSaveClinicalNotes}
-                      className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-brand-dark transition-all"
-                    >
-                      <CheckCircle2 className="h-4 w-4" /> Save Clinical Notes
-                    </button>
+                    {isEditingNote && (
+                      <button
+                        onClick={handleSaveClinicalNotes}
+                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-brand-dark transition-all"
+                      >
+                        <CheckCircle2 className="h-4 w-4" /> Save Clinical Note
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Saved Clinical Notes History */}
+                  <div className="space-y-3">
+                    <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                      Clinical Notes History
+                    </h5>
+                    {patientNotesList.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">No records available</p>
+                    ) : (
+                      patientNotesList.map((note) => (
+                        <div
+                          key={note.id}
+                          className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 text-xs space-y-1"
+                        >
+                          <div className="flex justify-between font-bold text-foreground">
+                            <span>{note.diagnosis}</span>
+                            <span className="text-muted-foreground font-normal">
+                              {formatDate(note.date)}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground">{note.treatmentNotes}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* MODAL TAB 2: MEDICATION & PRESCRIPTION */}
+              {/* TAB 3: TREATMENT HISTORY */}
+              {activeModalTab === "treatment" && (
+                <div className="space-y-6">
+                  {/* Save Treatment Form */}
+                  <div className="rounded-2xl border border-border/80 bg-slate-50/80 p-4 space-y-3 text-xs">
+                    <h4 className="font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Plus className="h-4 w-4 text-brand" /> Record New Treatment
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                          Treatment Name
+                        </label>
+                        <input
+                          type="text"
+                          value={trtName}
+                          onChange={(e) => setTrtName(e.target.value)}
+                          placeholder="e.g. Dental Implant Placement"
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none focus:border-brand"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                          Diagnosis
+                        </label>
+                        <input
+                          type="text"
+                          value={trtDiagnosis}
+                          onChange={(e) => setTrtDiagnosis(e.target.value)}
+                          placeholder="e.g. Edentulous space in #30"
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none focus:border-brand"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                          Treatment Date
+                        </label>
+                        <input
+                          type="date"
+                          value={trtDate}
+                          onChange={(e) => setTrtDate(e.target.value)}
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none focus:border-brand"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                          Status
+                        </label>
+                        <select
+                          value={trtStatus}
+                          onChange={(e) => setTrtStatus(e.target.value)}
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none"
+                        >
+                          <option value="Completed">Completed</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Planned">Planned</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleSaveTreatment}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2 text-xs font-semibold text-white shadow-soft"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Save Treatment Record
+                    </button>
+                  </div>
+
+                  {/* Treatment History Table */}
+                  <div className="space-y-3">
+                    <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                      Completed Procedure History
+                    </h5>
+                    {patientTreatmentsList.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">No records available</p>
+                    ) : (
+                      <div className="rounded-2xl border border-border/80 overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-100 text-muted-foreground uppercase font-semibold">
+                            <tr>
+                              <th className="p-3">Date</th>
+                              <th className="p-3">Treatment</th>
+                              <th className="p-3">Diagnosis</th>
+                              <th className="p-3">Doctor</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/60 bg-white">
+                            {patientTreatmentsList.map((t) => (
+                              <tr key={t.id}>
+                                <td className="p-3 font-medium text-foreground">
+                                  {formatDate(t.treatmentDate)}
+                                </td>
+                                <td className="p-3 font-bold text-foreground">{t.treatment}</td>
+                                <td className="p-3 text-muted-foreground">{t.diagnosis}</td>
+                                <td className="p-3 font-medium text-foreground">{t.doctor}</td>
+                                <td className="p-3">
+                                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                    {t.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: PRESCRIPTIONS */}
               {activeModalTab === "rx" && (
                 <div className="space-y-6">
                   {/* ADD MEDICINE FORM */}
@@ -1567,7 +1870,6 @@ function DoctorDashboardPage() {
                           className="mt-1 w-full rounded-xl border border-border bg-white p-2.5 text-xs font-medium text-foreground outline-none focus:border-brand"
                         />
                       </div>
-
                       <div>
                         <label className="block text-[11px] font-semibold text-muted-foreground">
                           Dosage
@@ -1580,7 +1882,9 @@ function DoctorDashboardPage() {
                           className="mt-1 w-full rounded-xl border border-border bg-white p-2.5 text-xs font-medium text-foreground outline-none focus:border-brand"
                         />
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-semibold text-muted-foreground">
                           Frequency
@@ -1596,7 +1900,6 @@ function DoctorDashboardPage() {
                           <option value="As needed for pain">As needed for pain</option>
                         </select>
                       </div>
-
                       <div>
                         <label className="block text-[11px] font-semibold text-muted-foreground">
                           Duration
@@ -1614,24 +1917,11 @@ function DoctorDashboardPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-muted-foreground">
-                        Instructions
-                      </label>
-                      <input
-                        type="text"
-                        value={medInstructions}
-                        onChange={(e) => setMedInstructions(e.target.value)}
-                        placeholder="e.g. Take after meals with water"
-                        className="mt-1 w-full rounded-xl border border-border bg-white p-2.5 text-xs font-medium text-foreground outline-none focus:border-brand"
-                      />
-                    </div>
-
                     <button
                       onClick={handleAddMedicine}
                       className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900 transition-colors"
                     >
-                      <Plus className="h-3.5 w-3.5" /> Add Medicine to List
+                      <Plus className="h-3.5 w-3.5" /> + Add Medicine
                     </button>
                   </div>
 
@@ -1659,7 +1949,7 @@ function DoctorDashboardPage() {
                             <td className="p-3 text-center">
                               <button
                                 onClick={() => handleRemoveMedicine(m.id)}
-                                className="text-rose-600 hover:text-rose-800 p-1"
+                                className="text-rose-600 p-1"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -1670,10 +1960,10 @@ function DoctorDashboardPage() {
                     </table>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <button
                       onClick={handleSavePrescription}
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-2.5 text-xs font-semibold text-white shadow-soft hover:scale-[1.01]"
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-2.5 text-xs font-semibold text-white shadow-soft"
                     >
                       <FileText className="h-4 w-4" /> Save Prescription
                     </button>
@@ -1699,45 +1989,91 @@ function DoctorDashboardPage() {
                 </div>
               )}
 
-              {/* MODAL TAB 3: PATIENT HISTORY TIMELINE */}
-              {activeModalTab === "timeline" && (
+              {/* TAB 5: APPOINTMENTS HISTORY */}
+              {activeModalTab === "apts" && (
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Activity className="h-4 w-4 text-brand" /> PATIENT CLINICAL JOURNEY TIMELINE
+                    <History className="h-4 w-4 text-brand" /> APPOINTMENT HISTORY
                   </h4>
 
-                  <div className="relative border-l-2 border-brand/30 ml-4 pl-6 space-y-6">
-                    {getStoredTimeline(selectedPatient.id).map((t, idx) => (
-                      <div key={t.id || idx} className="relative">
-                        <span className="absolute -left-[31px] top-0 grid h-5 w-5 place-items-center rounded-full bg-brand text-white text-[10px] font-bold">
-                          {idx + 1}
-                        </span>
-                        <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-brand-purple">{t.event}</span>
-                            <span className="text-muted-foreground">
-                              {formatDate(t.date)} at {t.time}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-foreground font-medium">{t.notes}</p>
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            Doctor: {t.doctor}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {patientAptsList.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">No records available</p>
+                  ) : (
+                    <div className="rounded-2xl border border-border/80 overflow-hidden">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 text-muted-foreground font-semibold uppercase">
+                          <tr>
+                            <th className="p-3">Date</th>
+                            <th className="p-3">Time</th>
+                            <th className="p-3">Treatment</th>
+                            <th className="p-3">Reason for Visit</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/60 bg-white">
+                          {patientAptsList.map((a) => (
+                            <tr key={a.id}>
+                              <td className="p-3 font-medium text-foreground">
+                                {formatDate(a.date)}
+                              </td>
+                              <td className="p-3 font-bold text-brand-purple">{a.time}</td>
+                              <td className="p-3 font-semibold text-foreground">{a.treatment}</td>
+                              <td className="p-3 text-muted-foreground">"{a.reasonForVisit}"</td>
+                              <td className="p-3">
+                                <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-bold text-blue-700">
+                                  {a.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* MODAL TAB 4: SCHEDULE FOLLOW-UP */}
-              {activeModalTab === "followup" && (
+              {/* TAB 6: MEDICAL REPORTS */}
+              {activeModalTab === "reports" && (
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4 text-brand" /> SCHEDULE NEXT FOLLOW-UP APPOINTMENT
+                    <FileCheck2 className="h-4 w-4 text-brand" /> PATIENT MEDICAL REPORTS
                   </h4>
 
+                  {patientReportsList.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic">No records available</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {patientReportsList.map((r) => (
+                        <div
+                          key={r.id}
+                          className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 text-xs flex items-center justify-between"
+                        >
+                          <div>
+                            <span className="font-bold text-foreground">{r.reportType}</span> —{" "}
+                            <span className="text-muted-foreground">{r.details}</span>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              Date: {formatDate(r.reportDate)}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                            {r.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 7: FOLLOW-UPS */}
+              {activeModalTab === "followup" && (
+                <div className="space-y-6">
                   <div className="rounded-2xl border border-border/80 bg-slate-50/80 p-5 space-y-4">
+                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-brand" /> SCHEDULE NEXT FOLLOW-UP
+                    </h4>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-foreground mb-1">
@@ -1750,7 +2086,6 @@ function DoctorDashboardPage() {
                           className="w-full rounded-xl border border-border bg-white p-3 text-xs font-semibold text-foreground outline-none focus:border-brand"
                         />
                       </div>
-
                       <div>
                         <label className="block text-xs font-semibold text-foreground mb-1">
                           Follow-up Time
@@ -1773,17 +2108,48 @@ function DoctorDashboardPage() {
                         type="text"
                         value={followupPurpose}
                         onChange={(e) => setFollowupPurpose(e.target.value)}
-                        placeholder="e.g. Post-op implant check, stitches removal"
+                        placeholder="e.g. Post-op checkup"
                         className="w-full rounded-xl border border-border bg-white p-3 text-xs font-semibold text-foreground outline-none focus:border-brand"
                       />
                     </div>
 
                     <button
                       onClick={handleScheduleFollowup}
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-xs font-semibold text-white shadow-soft hover:scale-[1.01]"
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-xs font-semibold text-white shadow-soft"
                     >
                       <Calendar className="h-4 w-4" /> Confirm & Schedule Follow-up
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 8: TIMELINE */}
+              {activeModalTab === "timeline" && (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity className="h-4 w-4 text-brand" /> PATIENT CLINICAL JOURNEY TIMELINE
+                  </h4>
+
+                  <div className="relative border-l-2 border-brand/30 ml-4 pl-6 space-y-6">
+                    {patientTimelineList.map((t, idx) => (
+                      <div key={t.id || idx} className="relative">
+                        <span className="absolute -left-[31px] top-0 grid h-5 w-5 place-items-center rounded-full bg-brand text-white text-[10px] font-bold">
+                          {idx + 1}
+                        </span>
+                        <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-brand-purple">{t.event}</span>
+                            <span className="text-muted-foreground">
+                              {formatDate(t.date)} at {t.time}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-foreground font-medium">{t.notes}</p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Doctor: {t.doctor}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1811,7 +2177,6 @@ function DoctorDashboardPage() {
       {printingRx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-xl rounded-3xl border border-border bg-white p-8 shadow-2xl space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-border pb-4">
               <Logo />
               <div className="text-right">
@@ -1824,7 +2189,6 @@ function DoctorDashboardPage() {
               </div>
             </div>
 
-            {/* Patient Header Info */}
             <div className="rounded-xl bg-slate-50 p-4 text-xs space-y-1">
               <p>
                 <span className="font-semibold text-muted-foreground">Patient Name:</span>{" "}
@@ -1846,7 +2210,6 @@ function DoctorDashboardPage() {
               )}
             </div>
 
-            {/* Medicines List */}
             <div className="space-y-2">
               <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Prescribed Medicines
@@ -1866,7 +2229,6 @@ function DoctorDashboardPage() {
               </div>
             </div>
 
-            {/* Footer Buttons */}
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <button
                 onClick={() => window.print()}
