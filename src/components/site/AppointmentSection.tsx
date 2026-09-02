@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import assistant from "@/assets/assistant.png";
+import { registerAppointmentInSupabase } from "@/lib/clinicalService";
 import { registerPublicAppointment } from "@/lib/clinicalStore";
 
 const serviceOptions = [
@@ -89,8 +90,8 @@ export function AppointmentForm() {
 
     setErrors(next);
     if (Object.keys(next).length === 0) {
-      // Register into Clinical Store (Persisted to localStorage)
-      registerPublicAppointment({
+      // Register into Supabase backend (with local fallback)
+      registerAppointmentInSupabase({
         name,
         phone,
         email,

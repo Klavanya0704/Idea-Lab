@@ -16,14 +16,15 @@ import {
 } from "lucide-react";
 import doctorImage from "@/assets/assistant.png";
 import { Logo } from "@/components/site/Logo";
+import { loginDoctorWithSupabase } from "@/lib/clinicalService";
 
 export const Route = createFileRoute("/doctor-login")({
   head: () => ({
     meta: [
-      { title: "Doctor Login | SmileCare Dental Hospital Portal" },
+      { title: "Doctor Login | SmileCare Dental Portal" },
       {
         name: "description",
-        content: "Secure login portal for SmileCare Dental Hospital doctors and clinical staff.",
+        content: "Secure access for SmileCare dental surgeons and clinical staff.",
       },
     ],
   }),
@@ -44,13 +45,13 @@ function DoctorLoginPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  const fillDemoCredentials = () => {
+  const handleFillDemo = () => {
     setEmail("doctor@smilecare.com");
     setPassword("smile123");
     setError("");
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -66,22 +67,18 @@ function DoctorLoginPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      if (
-        (email.toLowerCase() === "doctor@smilecare.com" && password === "smile123") ||
-        (email.includes("@") && password.length >= 6)
-      ) {
-        setLoading(false);
-        setSuccess(true);
+    const res = await loginDoctorWithSupabase(email, password);
 
-        setTimeout(() => {
-          navigate({ to: "/doctor-dashboard" });
-        }, 600);
-      } else {
-        setLoading(false);
-        setError("Invalid email or password. Please try again.");
-      }
-    }, 800);
+    if (res.success) {
+      setLoading(false);
+      setSuccess(true);
+      setTimeout(() => {
+        navigate({ to: "/doctor-dashboard" });
+      }, 600);
+    } else {
+      setLoading(false);
+      setError(res.error || "Invalid email or password. Please try again.");
+    }
   };
 
   return (
@@ -307,7 +304,7 @@ function DoctorLoginPage() {
               </div>
               <button
                 type="button"
-                onClick={fillDemoCredentials}
+                onClick={handleFillDemo}
                 className="mt-2 text-[11px] font-semibold text-brand-purple hover:underline"
               >
                 Auto-fill demo credentials

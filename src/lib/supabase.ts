@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
-    "⚠️ Supabase configuration missing! Please provide VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env.local"
+    "⚠️ Supabase configuration missing! Please provide VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env.local",
   );
 }
 
@@ -17,5 +17,5 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
     },
-  }
+  },
 );

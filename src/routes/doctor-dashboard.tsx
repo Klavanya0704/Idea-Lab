@@ -35,6 +35,15 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import {
+  fetchPatientsFromSupabase,
+  fetchTodaysAppointmentsFromSupabase,
+  fetchTreatmentRecordsFromSupabase,
+  saveClinicalNoteToSupabase,
+  savePrescriptionToSupabase,
+  scheduleFollowupInSupabase,
+  logoutDoctorFromSupabase,
+} from "@/lib/clinicalService";
+import {
   getStoredPatients,
   saveStoredPatients,
   getStoredAppointments,
@@ -78,6 +87,7 @@ function DoctorDashboardPage() {
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>([]);
   const [reports, setReports] = useState<MedicalReportRecord[]>([]);
+  const [loadingData, setLoadingData] = useState<boolean>(true);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<
@@ -121,11 +131,23 @@ function DoctorDashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Load Data on Mount & when Storage changes
-  const loadData = () => {
-    setPatients(getStoredPatients());
-    setAppointments(getStoredAppointments());
-    setTreatments(getStoredTreatmentRecords());
-    setReports(getStoredMedicalReports());
+  const loadData = async () => {
+    setLoadingData(true);
+    try {
+      const pData = await fetchPatientsFromSupabase();
+      const aData = await fetchTodaysAppointmentsFromSupabase();
+      const tData = await fetchTreatmentRecordsFromSupabase();
+      const rData = getStoredMedicalReports();
+
+      setPatients(pData);
+      setAppointments(aData);
+      setTreatments(tData);
+      setReports(rData);
+    } catch (err) {
+      console.error("Error loading dashboard data:", err);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   useEffect(() => {
@@ -270,36 +292,17 @@ function DoctorDashboardPage() {
   };
 
   // SAVE CLINICAL NOTES
-  const handleSaveClinicalNotes = () => {
+  const handleSaveClinicalNotes = async () => {
     if (!selectedPatient) return;
-    const noteObj: ClinicalNoteRecord = {
-      id: "NOTE-" + Date.now(),
+
+    await saveClinicalNoteToSupabase({
       patientId: selectedPatient.id,
-      date: "2026-09-02",
       diagnosis,
       treatmentNotes,
       observations,
-      doctor: "Dr. Anaya Sharma",
-      updatedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    saveStoredClinicalNote(noteObj);
-
-    // Add to Treatment Records
-    const existingTreatments = getStoredTreatmentRecords();
-    existingTreatments.unshift({
-      id: "TRT-" + Date.now().toString().slice(-4),
-      patientId: selectedPatient.id,
-      patientName: selectedPatient.name,
-      treatment: selectedPatient.treatment,
-      diagnosis: diagnosis || "Consultation Completed",
-      treatmentDate: "2026-09-02",
-      doctor: "Dr. Anaya Sharma",
-      status: "Completed",
     });
-    saveStoredTreatmentRecords(existingTreatments);
 
-    loadData();
+    await loadData();
     showToast(`Clinical Notes saved for ${selectedPatient.name}`);
   };
 
@@ -330,26 +333,22 @@ function DoctorDashboardPage() {
   };
 
   // SAVE PRESCRIPTION
-  const handleSavePrescription = () => {
+  const handleSavePrescription = async () => {
     if (!selectedPatient) return;
     if (medicines.length === 0) {
       alert("Please add at least one medicine to the prescription.");
       return;
     }
 
-    const rxObj: PrescriptionRecord = {
-      id: "RX-" + Date.now().toString().slice(-4),
+    await savePrescriptionToSupabase({
       patientId: selectedPatient.id,
       patientName: selectedPatient.name,
-      date: "2026-09-02",
-      doctor: "Dr. Anaya Sharma",
       medicines,
       diagnosis,
       notes: observations,
-    };
+    });
 
-    saveStoredPrescription(rxObj);
-    loadData();
+    await loadData();
     showToast(`Prescription saved for ${selectedPatient.name}`);
   };
 
@@ -382,48 +381,17 @@ function DoctorDashboardPage() {
   };
 
   // SCHEDULE FOLLOW-UP
-  const handleScheduleFollowup = () => {
+  const handleScheduleFollowup = async () => {
     if (!selectedPatient) return;
 
-    const newApt: AppointmentRecord = {
-      id: "APT-" + Date.now().toString().slice(-4),
-      patientId: selectedPatient.id,
-      patientName: selectedPatient.name,
-      phone: selectedPatient.phone,
-      email: selectedPatient.email,
-      date: followupDate,
-      time: followupTime,
-      treatment: selectedPatient.treatment,
-      reasonForVisit: followupPurpose,
-      status: "Confirmed",
-      doctor: "Dr. Anaya Sharma",
-    };
-
-    const updatedApts = [newApt, ...appointments];
-    setAppointments(updatedApts);
-    saveStoredAppointments(updatedApts);
-
-    // Update patient next appointment
-    const updatedPatients = patients.map((p) =>
-      p.id === selectedPatient.id
-        ? { ...p, nextAppointment: followupDate, status: "Follow-up" as const }
-        : p,
-    );
-    setPatients(updatedPatients);
-    saveStoredPatients(updatedPatients);
-
-    // Add Timeline event
-    addStoredTimelineEvent({
-      id: "TL-" + Date.now(),
+    await scheduleFollowupInSupabase({
       patientId: selectedPatient.id,
       date: followupDate,
       time: followupTime,
-      event: "Follow-up Scheduled",
-      doctor: "Dr. Anaya Sharma",
-      notes: followupPurpose,
+      purpose: followupPurpose,
     });
 
-    loadData();
+    await loadData();
     showToast(`Follow-up scheduled for ${selectedPatient.name} on ${formatDate(followupDate)}`);
   };
 
