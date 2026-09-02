@@ -1,0 +1,273 @@
+export interface Patient {
+  id: string;
+  name: string;
+  age: number;
+  gender: "Female" | "Male" | "Other";
+  phone: string;
+  email: string;
+  address: string;
+  registrationDate: string; // YYYY-MM-DD
+  treatment: string;
+  medicalHistory: string;
+  allergies: string;
+  lastVisit: string; // YYYY-MM-DD
+  nextAppointment: string; // YYYY-MM-DD
+  status: "Active" | "Follow-up" | "Completed" | "Pending";
+  isNew?: boolean;
+}
+
+export interface TodayAppointment {
+  id: string;
+  time: string;
+  patientName: string;
+  patientId: string;
+  treatment: string;
+  status: "Confirmed" | "In Progress" | "Completed" | "Scheduled";
+}
+
+export const INITIAL_PATIENTS: Patient[] = [
+  {
+    id: "P001",
+    name: "Priya Sharma",
+    age: 28,
+    gender: "Female",
+    phone: "+91 98765 43210",
+    email: "priya@gmail.com",
+    address: "Block B, Greater Kailash, New Delhi",
+    registrationDate: "2026-09-02",
+    treatment: "General Checkup",
+    medicalHistory: "None",
+    allergies: "Penicillin",
+    lastVisit: "2026-09-02",
+    nextAppointment: "2026-09-16",
+    status: "Active",
+    isNew: true,
+  },
+  {
+    id: "P002",
+    name: "Rahul Mehta",
+    age: 35,
+    gender: "Male",
+    phone: "+91 98765 43121",
+    email: "rahul@gmail.com",
+    address: "Sector 15, Gurgaon, Haryana",
+    registrationDate: "2026-08-28",
+    treatment: "Dental Implant",
+    medicalHistory: "Mild Hypertension",
+    allergies: "None",
+    lastVisit: "2026-08-30",
+    nextAppointment: "2026-09-10",
+    status: "Active",
+    isNew: true,
+  },
+  {
+    id: "P003",
+    name: "Sneha Reddy",
+    age: 24,
+    gender: "Female",
+    phone: "+91 98765 43876",
+    email: "sneha@gmail.com",
+    address: "Vasant Kunj, New Delhi",
+    registrationDate: "2026-08-25",
+    treatment: "Orthodontics",
+    medicalHistory: "Asthma",
+    allergies: "Dust, Pollen",
+    lastVisit: "2026-08-29",
+    nextAppointment: "2026-09-20",
+    status: "Active",
+    isNew: true,
+  },
+  {
+    id: "P004",
+    name: "Arjun Kumar",
+    age: 42,
+    gender: "Male",
+    phone: "+91 98765 43456",
+    email: "arjun@gmail.com",
+    address: "Noida Sector 62, Uttar Pradesh",
+    registrationDate: "2026-08-20",
+    treatment: "Root Canal",
+    medicalHistory: "Type 2 Diabetes (Controlled)",
+    allergies: "Sulfa drugs",
+    lastVisit: "2026-08-27",
+    nextAppointment: "2026-09-05",
+    status: "Follow-up",
+    isNew: false,
+  },
+  {
+    id: "P005",
+    name: "Anjali Rao",
+    age: 31,
+    gender: "Female",
+    phone: "+91 98765 43987",
+    email: "anjali@gmail.com",
+    address: "Saket, New Delhi",
+    registrationDate: "2026-08-18",
+    treatment: "Cosmetic Dentistry",
+    medicalHistory: "None",
+    allergies: "None",
+    lastVisit: "2026-08-25",
+    nextAppointment: "2026-09-12",
+    status: "Active",
+    isNew: false,
+  },
+  {
+    id: "P006",
+    name: "Vikram Malhotra",
+    age: 49,
+    gender: "Male",
+    phone: "+91 98765 43100",
+    email: "vikram.m@gmail.com",
+    address: "DLF Phase 5, Gurgaon",
+    registrationDate: "2026-08-12",
+    treatment: "Crown & Bridge",
+    medicalHistory: "Hypertension",
+    allergies: "Latex",
+    lastVisit: "2026-08-22",
+    nextAppointment: "2026-09-08",
+    status: "Active",
+    isNew: false,
+  },
+  {
+    id: "P007",
+    name: "Kavita Singh",
+    age: 27,
+    gender: "Female",
+    phone: "+91 98765 43777",
+    email: "kavita.singh@gmail.com",
+    address: "Janakpuri, New Delhi",
+    registrationDate: "2026-08-05",
+    treatment: "Teeth Whitening",
+    medicalHistory: "None",
+    allergies: "None",
+    lastVisit: "2026-08-18",
+    nextAppointment: "2026-10-01",
+    status: "Completed",
+    isNew: false,
+  },
+  {
+    id: "P008",
+    name: "Amitabh Verma",
+    age: 56,
+    gender: "Male",
+    phone: "+91 98765 43333",
+    email: "averma@gmail.com",
+    address: "Model Town, New Delhi",
+    registrationDate: "2026-07-29",
+    treatment: "Periodontal Surgery",
+    medicalHistory: "Cardiac Stent (2023)",
+    allergies: "Aspirin",
+    lastVisit: "2026-08-15",
+    nextAppointment: "2026-09-04",
+    status: "Follow-up",
+    isNew: false,
+  },
+  {
+    id: "P009",
+    name: "Neha Joshi",
+    age: 33,
+    gender: "Female",
+    phone: "+91 98765 43222",
+    email: "neha.joshi@gmail.com",
+    address: "Indirapuram, Ghaziabad",
+    registrationDate: "2026-07-15",
+    treatment: "Orthodontics",
+    medicalHistory: "Thyroid (Hypo)",
+    allergies: "None",
+    lastVisit: "2026-08-10",
+    nextAppointment: "2026-09-14",
+    status: "Active",
+    isNew: false,
+  },
+  {
+    id: "P010",
+    name: "Siddharth Nair",
+    age: 38,
+    gender: "Male",
+    phone: "+91 98765 43888",
+    email: "snair@gmail.com",
+    address: "Dwarka Sector 10, New Delhi",
+    registrationDate: "2026-06-20",
+    treatment: "Wisdom Tooth Extraction",
+    medicalHistory: "None",
+    allergies: "None",
+    lastVisit: "2026-07-02",
+    nextAppointment: "2026-09-25",
+    status: "Completed",
+    isNew: false,
+  },
+];
+
+export const TODAY_APPOINTMENTS: TodayAppointment[] = [
+  {
+    id: "APT-101",
+    time: "09:30 AM",
+    patientName: "Priya Sharma",
+    patientId: "P001",
+    treatment: "General Checkup",
+    status: "Completed",
+  },
+  {
+    id: "APT-102",
+    time: "10:30 AM",
+    patientName: "Arjun Kumar",
+    patientId: "P004",
+    treatment: "Root Canal Follow-up",
+    status: "In Progress",
+  },
+  {
+    id: "APT-103",
+    time: "11:45 AM",
+    patientName: "Rahul Mehta",
+    patientId: "P002",
+    treatment: "Dental Implant Consultation",
+    status: "Confirmed",
+  },
+  {
+    id: "APT-104",
+    time: "02:15 PM",
+    patientName: "Anjali Rao",
+    patientId: "P005",
+    treatment: "Cosmetic Veneers Prep",
+    status: "Confirmed",
+  },
+  {
+    id: "APT-105",
+    time: "03:30 PM",
+    patientName: "Sneha Reddy",
+    patientId: "P003",
+    treatment: "Orthodontics Adjustment",
+    status: "Scheduled",
+  },
+  {
+    id: "APT-106",
+    time: "04:30 PM",
+    patientName: "Vikram Malhotra",
+    patientId: "P006",
+    treatment: "Crown Fitting",
+    status: "Scheduled",
+  },
+  {
+    id: "APT-107",
+    time: "05:15 PM",
+    patientName: "Amitabh Verma",
+    patientId: "P008",
+    treatment: "Periodontal Checkup",
+    status: "Scheduled",
+  },
+  {
+    id: "APT-108",
+    time: "06:00 PM",
+    patientName: "Kavita Singh",
+    patientId: "P007",
+    treatment: "Whitening Follow-up",
+    status: "Scheduled",
+  },
+];
+
+export const DASHBOARD_STATS = {
+  totalRegisteredPatients: 248,
+  todaysAppointments: 8,
+  newPatientsThisMonth: 32,
+  pendingReviews: 3,
+};
