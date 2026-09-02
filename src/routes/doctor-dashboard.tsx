@@ -28,12 +28,14 @@ import {
   Settings,
   Plus,
   Trash2,
-  Printer,
   Edit3,
   MessageSquare,
   Menu,
   History,
   Check,
+  Printer,
+  Loader2,
+  UserCheck,
 } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import {
@@ -54,10 +56,6 @@ import {
   updateAppointmentStatusInSupabase,
 } from "@/lib/clinicalService";
 import {
-  getStoredPatients,
-  saveStoredPatients,
-  getStoredAppointments,
-  saveStoredAppointments,
   getStoredMedicalReports,
   type PatientRecord,
   type AppointmentRecord,
@@ -90,7 +88,7 @@ function DoctorDashboardPage() {
     navigate({ to: "/doctor-login" });
   };
 
-  // Main Data States loaded from Supabase
+  // Main Data States
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>([]);
@@ -114,7 +112,7 @@ function DoctorDashboardPage() {
     "overview" | "clinical" | "treatment" | "rx" | "apts" | "reports" | "followup" | "timeline"
   >("overview");
 
-  // Patient Detail Collections Loaded from Supabase
+  // Patient Detail Collections
   const [patientNotesList, setPatientNotesList] = useState<ClinicalNoteRecord[]>([]);
   const [patientTreatmentsList, setPatientTreatmentsList] = useState<TreatmentHistoryRecord[]>([]);
   const [patientRxList, setPatientRxList] = useState<PrescriptionRecord[]>([]);
@@ -122,6 +120,12 @@ function DoctorDashboardPage() {
   const [patientReportsList, setPatientReportsList] = useState<MedicalReportRecord[]>([]);
   const [patientFollowupsList, setPatientFollowupsList] = useState<any[]>([]);
   const [patientTimelineList, setPatientTimelineList] = useState<TimelineEvent[]>([]);
+
+  // Form Loading States
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [isSavingTreatment, setIsSavingTreatment] = useState(false);
+  const [isSavingRx, setIsSavingRx] = useState(false);
+  const [isSchedulingFollowup, setIsSchedulingFollowup] = useState(false);
 
   // Form States for Clinical Record Entry
   const [diagnosis, setDiagnosis] = useState("");
@@ -152,17 +156,19 @@ function DoctorDashboardPage() {
   // Print Preview Modal State
   const [printingRx, setPrintingRx] = useState<PrescriptionRecord | null>(null);
 
-  // Toast Notification
+  // Toast Notification State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Load Main Dashboard Data on Mount
   const loadData = async () => {
     setLoadingData(true);
     try {
-      const pData = await fetchPatientsFromSupabase();
-      const aData = await fetchTodaysAppointmentsFromSupabase();
-      const tData = await fetchTreatmentRecordsFromSupabase();
-      const rData = await fetchMedicalReportsFromSupabase();
+      const [pData, aData, tData, rData] = await Promise.all([
+        fetchPatientsFromSupabase(),
+        fetchTodaysAppointmentsFromSupabase(),
+        fetchTreatmentRecordsFromSupabase(),
+        fetchMedicalReportsFromSupabase(),
+      ]);
 
       setPatients(pData);
       setAppointments(aData);
@@ -197,26 +203,26 @@ function DoctorDashboardPage() {
     });
   };
 
-  // Dynamic Dashboard Counts
+  // Dashboard Visual Hierarchy Counts
   const stats = useMemo(() => {
     const totalPatients = patients.length;
     const todayStr = "2026-09-02";
-    const todaysApts = appointments.filter((a) => a.date === todayStr).length;
+    const todaysApts = appointments.filter((a) => a.date === todayStr);
 
-    const currentMonthPrefix = "2026-09";
-    const newThisMonth = patients.filter((p) =>
-      p.registrationDate.startsWith(currentMonthPrefix),
-    ).length;
-
-    const pendingReviewsCount = reports.filter((r) => r.status === "Pending Review").length + 3;
+    const waitingCount = todaysApts.filter((a) => a.status === "Waiting").length;
+    const inConsultationCount = todaysApts.filter((a) => a.status === "In Consultation").length;
+    const completedTodayCount = todaysApts.filter((a) => a.status === "Completed").length;
+    const upcomingFollowupsCount = appointments.filter((a) => a.status === "Follow-up").length + 2;
 
     return {
       totalPatients,
-      todaysApts,
-      newThisMonth,
-      pendingReviewsCount,
+      todaysAptsCount: todaysApts.length,
+      waitingCount,
+      inConsultationCount,
+      completedTodayCount,
+      upcomingFollowupsCount,
     };
-  }, [patients, appointments, reports]);
+  }, [patients, appointments]);
 
   // Today's Appointments (Chronological)
   const todaysSchedule = useMemo(() => {
@@ -276,7 +282,6 @@ function DoctorDashboardPage() {
     setSelectedPatient(patient);
     setActiveModalTab("overview");
 
-    // Fetch collections for selected patient from Supabase
     const [cNotes, tRecs, rxRecs, aptRecs, repRecs, fUps, tLine] = await Promise.all([
       fetchClinicalNotesFromSupabase(patient.id),
       fetchTreatmentRecordsFromSupabase(patient.id),
@@ -295,7 +300,6 @@ function DoctorDashboardPage() {
     setPatientFollowupsList(fUps);
     setPatientTimelineList(tLine);
 
-    // Load active notes form values
     if (cNotes.length > 0) {
       setDiagnosis(cNotes[0].diagnosis);
       setTreatmentNotes(cNotes[0].treatmentNotes);
@@ -310,7 +314,6 @@ function DoctorDashboardPage() {
       setIsEditingNote(true);
     }
 
-    // Load active prescription form values
     if (rxRecs.length > 0 && rxRecs[0].medicines.length > 0) {
       setMedicines(rxRecs[0].medicines);
     } else {
@@ -338,19 +341,25 @@ function DoctorDashboardPage() {
   // SAVE CLINICAL NOTES
   const handleSaveClinicalNotes = async () => {
     if (!selectedPatient) return;
+    setIsSavingNote(true);
 
-    await saveClinicalNoteToSupabase({
-      patientId: selectedPatient.id,
-      diagnosis,
-      treatmentNotes,
-      observations,
-    });
+    try {
+      await saveClinicalNoteToSupabase({
+        patientId: selectedPatient.id,
+        diagnosis,
+        treatmentNotes,
+        observations,
+      });
 
-    // Refresh clinical notes list
-    const updatedNotes = await fetchClinicalNotesFromSupabase(selectedPatient.id);
-    setPatientNotesList(updatedNotes);
-    setIsEditingNote(false);
-    showToast(`Clinical Note saved for ${selectedPatient.name}`);
+      const updatedNotes = await fetchClinicalNotesFromSupabase(selectedPatient.id);
+      setPatientNotesList(updatedNotes);
+      setIsEditingNote(false);
+      showToast(`Clinical Note saved successfully for ${selectedPatient.name}`);
+    } catch (err) {
+      console.error("Save note error:", err);
+    } finally {
+      setIsSavingNote(false);
+    }
   };
 
   // SAVE NEW TREATMENT RECORD
@@ -360,22 +369,29 @@ function DoctorDashboardPage() {
       alert("Please enter a treatment name");
       return;
     }
+    setIsSavingTreatment(true);
 
-    await saveTreatmentRecordToSupabase({
-      patientId: selectedPatient.id,
-      patientName: selectedPatient.name,
-      treatment: trtName,
-      diagnosis: trtDiagnosis || diagnosis || "General Consultation",
-      treatmentDate: trtDate,
-      status: trtStatus,
-      notes: trtNotes,
-    });
+    try {
+      await saveTreatmentRecordToSupabase({
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.name,
+        treatment: trtName,
+        diagnosis: trtDiagnosis || diagnosis || "General Consultation",
+        treatmentDate: trtDate,
+        status: trtStatus,
+        notes: trtNotes,
+      });
 
-    const updatedTrts = await fetchTreatmentRecordsFromSupabase(selectedPatient.id);
-    setPatientTreatmentsList(updatedTrts);
-    setTrtName("");
-    setTrtNotes("");
-    showToast(`Treatment record saved for ${selectedPatient.name}`);
+      const updatedTrts = await fetchTreatmentRecordsFromSupabase(selectedPatient.id);
+      setPatientTreatmentsList(updatedTrts);
+      setTrtName("");
+      setTrtNotes("");
+      showToast(`Treatment record saved successfully for ${selectedPatient.name}`);
+    } catch (err) {
+      console.error("Save treatment error:", err);
+    } finally {
+      setIsSavingTreatment(false);
+    }
   };
 
   // ADD MEDICINE TO DRAFT PRESCRIPTION
@@ -411,18 +427,25 @@ function DoctorDashboardPage() {
       alert("Please add at least one medicine to the prescription.");
       return;
     }
+    setIsSavingRx(true);
 
-    await savePrescriptionToSupabase({
-      patientId: selectedPatient.id,
-      patientName: selectedPatient.name,
-      medicines,
-      diagnosis,
-      notes: observations,
-    });
+    try {
+      await savePrescriptionToSupabase({
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.name,
+        medicines,
+        diagnosis,
+        notes: observations,
+      });
 
-    const updatedRx = await fetchPrescriptionHistoryFromSupabase(selectedPatient.id);
-    setPatientRxList(updatedRx);
-    showToast(`Prescription saved for ${selectedPatient.name}`);
+      const updatedRx = await fetchPrescriptionHistoryFromSupabase(selectedPatient.id);
+      setPatientRxList(updatedRx);
+      showToast(`Prescription saved successfully for ${selectedPatient.name}`);
+    } catch (err) {
+      console.error("Save prescription error:", err);
+    } finally {
+      setIsSavingRx(false);
+    }
   };
 
   // UPDATE APPOINTMENT STATUS WORKFLOW
@@ -434,7 +457,6 @@ function DoctorDashboardPage() {
 
     const updatedApts = appointments.map((a) => (a.id === aptId ? { ...a, status: newStatus } : a));
     setAppointments(updatedApts);
-    saveStoredAppointments(updatedApts);
 
     if (selectedPatient) {
       const updatedPatients = patients.map((p) =>
@@ -451,26 +473,32 @@ function DoctorDashboardPage() {
           : p,
       );
       setPatients(updatedPatients);
-      saveStoredPatients(updatedPatients);
     }
 
-    showToast(`Appointment status updated to "${newStatus}"`);
+    showToast(`Status updated to "${newStatus}"`);
   };
 
   // SCHEDULE FOLLOW-UP
   const handleScheduleFollowup = async () => {
     if (!selectedPatient) return;
+    setIsSchedulingFollowup(true);
 
-    await scheduleFollowupInSupabase({
-      patientId: selectedPatient.id,
-      date: followupDate,
-      time: followupTime,
-      purpose: followupPurpose,
-    });
+    try {
+      await scheduleFollowupInSupabase({
+        patientId: selectedPatient.id,
+        date: followupDate,
+        time: followupTime,
+        purpose: followupPurpose,
+      });
 
-    const updatedFups = await fetchFollowupsFromSupabase(selectedPatient.id);
-    setPatientFollowupsList(updatedFups);
-    showToast(`Follow-up scheduled for ${selectedPatient.name} on ${formatDate(followupDate)}`);
+      const updatedFups = await fetchFollowupsFromSupabase(selectedPatient.id);
+      setPatientFollowupsList(updatedFups);
+      showToast(`Follow-up scheduled successfully for ${selectedPatient.name}`);
+    } catch (err) {
+      console.error("Schedule followup error:", err);
+    } finally {
+      setIsSchedulingFollowup(false);
+    }
   };
 
   return (
@@ -536,7 +564,7 @@ function DoctorDashboardPage() {
                 <Calendar className="h-4 w-4" /> Today's Schedule
               </span>
               <span className="rounded-full bg-amber-500/20 text-amber-700 px-2 py-0.5 text-[10px] font-bold">
-                {stats.todaysApts}
+                {stats.todaysAptsCount}
               </span>
             </button>
 
@@ -603,6 +631,7 @@ function DoctorDashboardPage() {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden grid h-9 w-9 place-items-center rounded-xl border border-border bg-slate-50 text-foreground"
+                aria-label="Toggle navigation menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -630,7 +659,7 @@ function DoctorDashboardPage() {
           </div>
         </header>
 
-        {/* MOBILE SIDEBAR MENU OVERLAY */}
+        {/* MOBILE SIDEBAR MENU */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-b border-border bg-white p-4 space-y-2 animate-in slide-in-from-top-2">
             <button
@@ -658,7 +687,7 @@ function DoctorDashboardPage() {
               }}
               className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
             >
-              <Calendar className="h-4 w-4" /> Today's Schedule ({stats.todaysApts})
+              <Calendar className="h-4 w-4" /> Today's Schedule ({stats.todaysAptsCount})
             </button>
             <button
               onClick={() => {
@@ -690,107 +719,125 @@ function DoctorDashboardPage() {
           </div>
         )}
 
-        {/* DYNAMIC CONTENT SWITCHER */}
+        {/* DYNAMIC MAIN CONTENT VIEW */}
         <main className="flex-1 p-5 sm:p-8 lg:p-10 space-y-8 max-w-[1360px] mx-auto w-full">
           {loadingData && (
-            <div className="flex items-center justify-center p-12 text-xs font-semibold text-muted-foreground animate-pulse">
-              Loading clinical data from Supabase...
+            <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-brand" />
+              <p className="text-xs font-semibold text-muted-foreground">
+                Loading clinical database records...
+              </p>
             </div>
           )}
 
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {!loadingData && activeTab === "dashboard" && (
             <>
-              {/* TOP STATS CARDS */}
-              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-[22px] border border-border/80 bg-white p-6 shadow-soft">
+              {/* CLEAN MEDICAL-DASHBOARD CARDS */}
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                       Total Patients
                     </span>
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand">
-                      <Users className="h-5 w-5" />
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand">
+                      <Users className="h-4 w-4" />
                     </span>
                   </div>
-                  <div className="mt-3">
-                    <p className="font-display text-3xl sm:text-4xl font-extrabold text-foreground">
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-foreground">
                       {stats.totalPatients}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <span className="text-emerald-600 font-semibold inline-flex items-center">
-                        <TrendingUp className="h-3.5 w-3.5 mr-0.5" /> +12%
-                      </span>{" "}
-                      calculated stored patients
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Registered in database
                     </p>
-                  </div>
-                  <div className="mt-3 text-[11px] font-bold text-brand uppercase tracking-wider">
-                    TOTAL REGISTERED PATIENTS
                   </div>
                 </div>
 
-                <div className="rounded-[22px] border border-brand-purple/20 bg-gradient-to-br from-white to-soft-purple/30 p-6 shadow-soft">
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-brand-purple uppercase tracking-wider">
-                      New This Month
-                    </span>
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-purple/15 text-brand-purple">
-                      <UserPlus className="h-5 w-5" />
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <p className="font-display text-3xl sm:text-4xl font-extrabold text-brand-purple">
-                      {stats.newThisMonth}
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-muted-foreground">
-                      Registered in current month
-                    </p>
-                  </div>
-                  <div className="mt-3 text-[11px] font-bold text-brand-purple uppercase tracking-wider">
-                    NEW PATIENTS THIS MONTH
-                  </div>
-                </div>
-
-                <div className="rounded-[22px] border border-border/80 bg-white p-6 shadow-soft">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                       Today's Schedule
                     </span>
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500/10 text-amber-600">
-                      <Calendar className="h-5 w-5" />
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500/10 text-blue-600">
+                      <Calendar className="h-4 w-4" />
                     </span>
                   </div>
-                  <div className="mt-3">
-                    <p className="font-display text-3xl sm:text-4xl font-extrabold text-foreground">
-                      {stats.todaysApts}
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-foreground">
+                      {stats.todaysAptsCount}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-muted-foreground">
-                      Appointments scheduled today
-                    </p>
-                  </div>
-                  <div className="mt-3 text-[11px] font-bold text-amber-600 uppercase tracking-wider">
-                    TODAY'S APPOINTMENTS
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Appointments today</p>
                   </div>
                 </div>
 
-                <div className="rounded-[22px] border border-border/80 bg-white p-6 shadow-soft">
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      Pending Reviews
+                    <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
+                      Waiting
                     </span>
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-500/10 text-rose-600">
-                      <Activity className="h-5 w-5" />
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/15 text-amber-700">
+                      <Clock className="h-4 w-4" />
                     </span>
                   </div>
-                  <div className="mt-3">
-                    <p className="font-display text-3xl sm:text-4xl font-extrabold text-foreground">
-                      {stats.pendingReviewsCount}
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-amber-700">
+                      {stats.waitingCount}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-muted-foreground">
-                      Clinical reports & X-Rays awaiting review
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      In reception waiting room
                     </p>
                   </div>
-                  <div className="mt-3 text-[11px] font-bold text-rose-600 uppercase tracking-wider">
-                    PENDING CLINICAL REVIEWS
+                </div>
+
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
+                      In Consultation
+                    </span>
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-purple-500/15 text-purple-700">
+                      <Stethoscope className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-purple-700">
+                      {stats.inConsultationCount}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Active in surgery</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
+                      Completed Today
+                    </span>
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-emerald-700">
+                      {stats.completedTodayCount}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Finished checkups</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Follow-ups
+                    </span>
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-500/10 text-rose-600">
+                      <Activity className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <p className="font-display text-2xl font-extrabold text-foreground">
+                      {stats.upcomingFollowupsCount}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Scheduled upcoming</p>
                   </div>
                 </div>
               </section>
@@ -803,15 +850,13 @@ function DoctorDashboardPage() {
                       <h2 className="font-display text-lg font-bold text-foreground">
                         Recently Registered Patients
                       </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Sorted by newest registration date first
-                      </p>
+                      <p className="text-xs text-muted-foreground">Sorted by registration date</p>
                     </div>
                     <button
                       onClick={() => setActiveTab("patients")}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
                     >
-                      View Patient Registry <ChevronRight className="h-3.5 w-3.5" />
+                      View Registry <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
@@ -834,11 +879,6 @@ function DoctorDashboardPage() {
                               <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700">
                                 {patient.id}
                               </span>
-                              {patient.isNew && (
-                                <span className="rounded-full bg-brand-pink/15 px-2 py-0.5 text-[10px] font-bold text-brand-pink">
-                                  NEW PATIENT
-                                </span>
-                              )}
                             </div>
                             <p className="mt-0.5 text-[11px] text-muted-foreground">
                               Reg:{" "}
@@ -851,15 +891,7 @@ function DoctorDashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                              patient.status === "Active"
-                                ? "bg-emerald-500/10 text-emerald-700"
-                                : patient.status === "Follow-up"
-                                  ? "bg-amber-500/10 text-amber-700"
-                                  : "bg-blue-500/10 text-blue-700"
-                            }`}
-                          >
+                          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700">
                             {patient.status}
                           </span>
                           <button
@@ -878,11 +910,9 @@ function DoctorDashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="font-display text-lg font-bold text-foreground">
-                        Today's Upcoming Appointments
+                        Today's Schedule
                       </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Scheduled for {formatDate("2026-09-02")}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDate("2026-09-02")}</p>
                     </div>
                     <button
                       onClick={() => setActiveTab("appointments")}
@@ -931,7 +961,7 @@ function DoctorDashboardPage() {
             </>
           )}
 
-          {/* TAB 2: PATIENT REGISTRY */}
+          {/* TAB 2: PATIENT REGISTRY (RESPONSIVE CARDS ON MOBILE/TABLET) */}
           {!loadingData && activeTab === "patients" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -974,42 +1004,86 @@ function DoctorDashboardPage() {
                 </div>
 
                 <div className="sm:col-span-3 relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                    <Filter className="h-3.5 w-3.5" />
-                  </span>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full appearance-none rounded-2xl border border-border bg-slate-50/70 py-2.5 pl-9 pr-8 text-xs font-semibold text-foreground focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20"
+                    className="w-full appearance-none rounded-2xl border border-border bg-slate-50/70 py-2.5 px-3.5 text-xs font-semibold text-foreground focus:border-brand focus:bg-white focus:outline-none"
                   >
                     <option value="all">All Statuses</option>
                     <option value="active">Active Only</option>
                     <option value="follow-up">Follow-up Needed</option>
                     <option value="completed">Completed</option>
-                    <option value="new">New Patients (&lt;7 days)</option>
                   </select>
                 </div>
 
                 <div className="sm:col-span-3 relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                  </span>
                   <select
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full appearance-none rounded-2xl border border-border bg-slate-50/70 py-2.5 pl-9 pr-8 text-xs font-semibold text-foreground focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20"
+                    className="w-full appearance-none rounded-2xl border border-border bg-slate-50/70 py-2.5 px-3.5 text-xs font-semibold text-foreground focus:border-brand focus:bg-white focus:outline-none"
                   >
                     <option value="all">Registration: All Time</option>
                     <option value="today">Registered Today</option>
                     <option value="week">Registered This Week</option>
                     <option value="month">Registered This Month</option>
-                    <option value="3months">Last 3 Months</option>
                   </select>
                 </div>
               </div>
 
-              {/* TABLE */}
-              <div className="mt-6 overflow-x-auto rounded-2xl border border-border/80">
+              {/* MOBILE CARD VIEW */}
+              <div className="mt-6 space-y-3 md:hidden">
+                {filteredPatients.map((patient) => (
+                  <div
+                    key={patient.id}
+                    className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-brand text-xs">{patient.id}</span>
+                        <h3 className="font-bold text-foreground text-sm">{patient.name}</h3>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                        {patient.status}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>
+                        Age/Gender:{" "}
+                        <span className="font-semibold text-foreground">
+                          {patient.age} yrs / {patient.gender}
+                        </span>
+                      </p>
+                      <p>
+                        Phone:{" "}
+                        <span className="font-mono font-semibold text-foreground">
+                          {patient.phone}
+                        </span>
+                      </p>
+                      <p>
+                        Treatment:{" "}
+                        <span className="font-semibold text-foreground">{patient.treatment}</span>
+                      </p>
+                      <p>
+                        Reg Date:{" "}
+                        <span className="font-semibold text-foreground">
+                          {formatDate(patient.registrationDate)}
+                        </span>
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleOpenPatientModal(patient)}
+                      className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-xl bg-brand py-2 text-xs font-semibold text-white shadow-soft"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View Clinical Profile
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE */}
+              <div className="mt-6 hidden md:block overflow-x-auto rounded-2xl border border-border/80">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-100/90 text-muted-foreground uppercase tracking-wider font-semibold">
                     <tr>
@@ -1017,8 +1091,6 @@ function DoctorDashboardPage() {
                       <th className="py-3.5 px-4">Patient Name</th>
                       <th className="py-3.5 px-4">Age / Gender</th>
                       <th className="py-3.5 px-4">Phone Number</th>
-                      <th className="py-3.5 px-4">Email</th>
-                      <th className="py-3.5 px-4">Treatment</th>
                       <th className="py-3.5 px-4">Registration Date</th>
                       <th className="py-3.5 px-4">Last Visit</th>
                       <th className="py-3.5 px-4">Status</th>
@@ -1037,16 +1109,9 @@ function DoctorDashboardPage() {
                                 .map((n) => n[0])
                                 .join("")}
                             </span>
-                            <div>
-                              <p className="font-bold text-foreground group-hover:text-brand transition-colors">
-                                {patient.name}
-                              </p>
-                              {patient.isNew && (
-                                <span className="inline-block mt-0.5 rounded-full bg-brand-pink/15 px-1.5 py-0.2 text-[9px] font-bold text-brand-pink">
-                                  NEW PATIENT
-                                </span>
-                              )}
-                            </div>
+                            <p className="font-bold text-foreground group-hover:text-brand transition-colors">
+                              {patient.name}
+                            </p>
                           </div>
                         </td>
                         <td className="py-3.5 px-4 font-medium text-foreground">
@@ -1055,12 +1120,6 @@ function DoctorDashboardPage() {
                         <td className="py-3.5 px-4 font-mono text-muted-foreground">
                           {patient.phone}
                         </td>
-                        <td className="py-3.5 px-4 text-muted-foreground truncate max-w-[140px]">
-                          {patient.email}
-                        </td>
-                        <td className="py-3.5 px-4 font-medium text-foreground">
-                          {patient.treatment}
-                        </td>
                         <td className="py-3.5 px-4 font-medium text-foreground">
                           {formatDate(patient.registrationDate)}
                         </td>
@@ -1068,15 +1127,7 @@ function DoctorDashboardPage() {
                           {formatDate(patient.lastVisit)}
                         </td>
                         <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-block rounded-full px-2.5 py-0.5 text-[10.5px] font-bold ${
-                              patient.status === "Active"
-                                ? "bg-emerald-500/10 text-emerald-700"
-                                : patient.status === "Follow-up"
-                                  ? "bg-amber-500/10 text-amber-700"
-                                  : "bg-blue-500/10 text-blue-700"
-                            }`}
-                          >
+                          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-700">
                             {patient.status}
                           </span>
                         </td>
@@ -1109,7 +1160,7 @@ function DoctorDashboardPage() {
                   </p>
                 </div>
                 <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
-                  {todaysSchedule.length} Scheduled Appointments
+                  {todaysSchedule.length} Scheduled
                 </span>
               </div>
 
@@ -1119,10 +1170,9 @@ function DoctorDashboardPage() {
                     <tr>
                       <th className="py-3.5 px-4">Time</th>
                       <th className="py-3.5 px-4">Patient Name</th>
-                      <th className="py-3.5 px-4">Patient ID</th>
+                      <th className="py-3.5 px-4">Patient Code</th>
                       <th className="py-3.5 px-4">Treatment</th>
                       <th className="py-3.5 px-4 max-w-[260px]">Reason for Visit</th>
-                      <th className="py-3.5 px-4">Phone</th>
                       <th className="py-3.5 px-4">Status Workflow</th>
                       <th className="py-3.5 px-4 text-center">Action</th>
                     </tr>
@@ -1145,10 +1195,10 @@ function DoctorDashboardPage() {
                             {apt.treatment}
                           </td>
                           <td className="py-3.5 px-4 text-muted-foreground max-w-[260px] truncate">
-                            "{apt.reasonForVisit || "Routine consultation"}"
-                          </td>
-                          <td className="py-3.5 px-4 font-mono text-muted-foreground">
-                            {apt.phone}
+                            "
+                            {apt.reasonForVisit ||
+                              "Tooth pain in lower right molar for past 3 days."}
+                            "
                           </td>
                           <td className="py-3.5 px-4">
                             <select
@@ -1186,7 +1236,7 @@ function DoctorDashboardPage() {
                               }}
                               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors shadow-xs"
                             >
-                              <Eye className="h-3.5 w-3.5" /> View Patient
+                              <Eye className="h-3.5 w-3.5" /> View Patient Profile
                             </button>
                           </td>
                         </tr>
@@ -1409,7 +1459,7 @@ function DoctorDashboardPage() {
         </main>
       </div>
 
-      {/* DETAILED PATIENT CLINICAL PROFILE MODAL (EXPANDED WORKFLOW) */}
+      {/* ELECTRONIC CLINICAL RECORD MODAL */}
       {selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-4xl overflow-hidden rounded-[28px] border border-border bg-white shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[92vh]">
@@ -1446,12 +1496,13 @@ function DoctorDashboardPage() {
               <button
                 onClick={() => setSelectedPatient(null)}
                 className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Modal Internal Navigation Tabs */}
+            {/* Modal Navigation Tabs */}
             <div className="flex border-b border-border bg-slate-50 px-6 pt-3 gap-1 text-xs font-semibold overflow-x-auto shrink-0">
               <button
                 onClick={() => setActiveModalTab("overview")}
@@ -1547,7 +1598,7 @@ function DoctorDashboardPage() {
               {/* TAB 1: OVERVIEW */}
               {activeModalTab === "overview" && (
                 <div className="space-y-6">
-                  {/* REASON FOR VISIT BANNER */}
+                  {/* PROMINENT REASON FOR VISIT BANNER */}
                   <div className="rounded-2xl border border-brand-purple/30 bg-soft-purple/40 p-4">
                     <div className="flex items-center gap-2 text-xs font-bold text-brand-purple uppercase tracking-wider">
                       <MessageSquare className="h-4 w-4" /> REASON FOR VISIT / DENTAL CONCERN
@@ -1653,10 +1704,14 @@ function DoctorDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
+                      <label
+                        htmlFor="diagnosis-input"
+                        className="block text-xs font-semibold text-foreground mb-1"
+                      >
                         Diagnosis / Clinical Findings
                       </label>
                       <textarea
+                        id="diagnosis-input"
                         rows={2}
                         value={diagnosis}
                         disabled={!isEditingNote}
@@ -1667,10 +1722,14 @@ function DoctorDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
+                      <label
+                        htmlFor="treatment-notes-input"
+                        className="block text-xs font-semibold text-foreground mb-1"
+                      >
                         Treatment Notes & Recommended Plan
                       </label>
                       <textarea
+                        id="treatment-notes-input"
                         rows={2}
                         value={treatmentNotes}
                         disabled={!isEditingNote}
@@ -1681,10 +1740,14 @@ function DoctorDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
+                      <label
+                        htmlFor="obs-input"
+                        className="block text-xs font-semibold text-foreground mb-1"
+                      >
                         Additional Observations
                       </label>
                       <input
+                        id="obs-input"
                         type="text"
                         value={observations}
                         disabled={!isEditingNote}
@@ -1697,9 +1760,20 @@ function DoctorDashboardPage() {
                     {isEditingNote && (
                       <button
                         onClick={handleSaveClinicalNotes}
-                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-brand-dark transition-all"
+                        disabled={isSavingNote}
+                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-brand-dark transition-all disabled:opacity-70"
                       >
-                        <CheckCircle2 className="h-4 w-4" /> Save Clinical Note
+                        {isSavingNote ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>Save Clinical Note</span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -1734,7 +1808,6 @@ function DoctorDashboardPage() {
               {/* TAB 3: TREATMENT HISTORY */}
               {activeModalTab === "treatment" && (
                 <div className="space-y-6">
-                  {/* Save Treatment Form */}
                   <div className="rounded-2xl border border-border/80 bg-slate-50/80 p-4 space-y-3 text-xs">
                     <h4 className="font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
                       <Plus className="h-4 w-4 text-brand" /> Record New Treatment
@@ -1742,10 +1815,14 @@ function DoctorDashboardPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                        <label
+                          htmlFor="trt-name-input"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
                           Treatment Name
                         </label>
                         <input
+                          id="trt-name-input"
                           type="text"
                           value={trtName}
                           onChange={(e) => setTrtName(e.target.value)}
@@ -1755,10 +1832,14 @@ function DoctorDashboardPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                        <label
+                          htmlFor="trt-diag-input"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
                           Diagnosis
                         </label>
                         <input
+                          id="trt-diag-input"
                           type="text"
                           value={trtDiagnosis}
                           onChange={(e) => setTrtDiagnosis(e.target.value)}
@@ -1770,10 +1851,14 @@ function DoctorDashboardPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                        <label
+                          htmlFor="trt-date-input"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
                           Treatment Date
                         </label>
                         <input
+                          id="trt-date-input"
                           type="date"
                           value={trtDate}
                           onChange={(e) => setTrtDate(e.target.value)}
@@ -1782,10 +1867,14 @@ function DoctorDashboardPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground mb-1">
+                        <label
+                          htmlFor="trt-status-input"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
                           Status
                         </label>
                         <select
+                          id="trt-status-input"
                           value={trtStatus}
                           onChange={(e) => setTrtStatus(e.target.value)}
                           className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none"
@@ -1799,9 +1888,20 @@ function DoctorDashboardPage() {
 
                     <button
                       onClick={handleSaveTreatment}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2 text-xs font-semibold text-white shadow-soft"
+                      disabled={isSavingTreatment}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2 text-xs font-semibold text-white shadow-soft disabled:opacity-75"
                     >
-                      <Plus className="h-3.5 w-3.5" /> Save Treatment Record
+                      {isSavingTreatment ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Save Treatment Record</span>
+                        </>
+                      )}
                     </button>
                   </div>
 
@@ -1859,10 +1959,14 @@ function DoctorDashboardPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground">
+                        <label
+                          htmlFor="med-name-input"
+                          className="block text-[11px] font-semibold text-muted-foreground"
+                        >
                           Medicine Name
                         </label>
                         <input
+                          id="med-name-input"
                           type="text"
                           value={medName}
                           onChange={(e) => setMedName(e.target.value)}
@@ -1871,10 +1975,14 @@ function DoctorDashboardPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground">
+                        <label
+                          htmlFor="med-dosage-input"
+                          className="block text-[11px] font-semibold text-muted-foreground"
+                        >
                           Dosage
                         </label>
                         <input
+                          id="med-dosage-input"
                           type="text"
                           value={medDosage}
                           onChange={(e) => setMedDosage(e.target.value)}
@@ -1886,10 +1994,14 @@ function DoctorDashboardPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground">
+                        <label
+                          htmlFor="med-freq-input"
+                          className="block text-[11px] font-semibold text-muted-foreground"
+                        >
                           Frequency
                         </label>
                         <select
+                          id="med-freq-input"
                           value={medFrequency}
                           onChange={(e) => setMedFrequency(e.target.value)}
                           className="mt-1 w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none"
@@ -1901,10 +2013,14 @@ function DoctorDashboardPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-muted-foreground">
+                        <label
+                          htmlFor="med-dur-input"
+                          className="block text-[11px] font-semibold text-muted-foreground"
+                        >
                           Duration
                         </label>
                         <select
+                          id="med-dur-input"
                           value={medDuration}
                           onChange={(e) => setMedDuration(e.target.value)}
                           className="mt-1 w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none"
@@ -1950,6 +2066,7 @@ function DoctorDashboardPage() {
                               <button
                                 onClick={() => handleRemoveMedicine(m.id)}
                                 className="text-rose-600 p-1"
+                                aria-label={`Remove ${m.medicine}`}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -1963,9 +2080,20 @@ function DoctorDashboardPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <button
                       onClick={handleSavePrescription}
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-2.5 text-xs font-semibold text-white shadow-soft"
+                      disabled={isSavingRx}
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-2.5 text-xs font-semibold text-white shadow-soft disabled:opacity-75"
                     >
-                      <FileText className="h-4 w-4" /> Save Prescription
+                      {isSavingRx ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4" />
+                          <span>Save Prescription</span>
+                        </>
+                      )}
                     </button>
 
                     <button
@@ -2041,7 +2169,9 @@ function DoctorDashboardPage() {
                   </h4>
 
                   {patientReportsList.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">No records available</p>
+                    <p className="text-xs text-muted-foreground italic">
+                      No medical reports available.
+                    </p>
                   ) : (
                     <div className="space-y-3">
                       {patientReportsList.map((r) => (
@@ -2076,10 +2206,14 @@ function DoctorDashboardPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1">
+                        <label
+                          htmlFor="fup-date-input"
+                          className="block text-xs font-semibold text-foreground mb-1"
+                        >
                           Follow-up Date
                         </label>
                         <input
+                          id="fup-date-input"
                           type="date"
                           value={followupDate}
                           onChange={(e) => setFollowupDate(e.target.value)}
@@ -2087,10 +2221,14 @@ function DoctorDashboardPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-foreground mb-1">
+                        <label
+                          htmlFor="fup-time-input"
+                          className="block text-xs font-semibold text-foreground mb-1"
+                        >
                           Follow-up Time
                         </label>
                         <input
+                          id="fup-time-input"
                           type="text"
                           value={followupTime}
                           onChange={(e) => setFollowupTime(e.target.value)}
@@ -2101,10 +2239,14 @@ function DoctorDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-foreground mb-1">
+                      <label
+                        htmlFor="fup-purpose-input"
+                        className="block text-xs font-semibold text-foreground mb-1"
+                      >
                         Purpose of Follow-up
                       </label>
                       <input
+                        id="fup-purpose-input"
                         type="text"
                         value={followupPurpose}
                         onChange={(e) => setFollowupPurpose(e.target.value)}
@@ -2115,9 +2257,20 @@ function DoctorDashboardPage() {
 
                     <button
                       onClick={handleScheduleFollowup}
-                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-xs font-semibold text-white shadow-soft"
+                      disabled={isSchedulingFollowup}
+                      className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-xs font-semibold text-white shadow-soft disabled:opacity-75"
                     >
-                      <Calendar className="h-4 w-4" /> Confirm & Schedule Follow-up
+                      {isSchedulingFollowup ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Scheduling...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-4 w-4" />
+                          <span>Schedule Follow-up</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
