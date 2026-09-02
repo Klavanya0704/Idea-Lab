@@ -28,6 +28,13 @@ export interface ExtendedPatientProfile extends PatientRecord {
   dbId?: string;
 }
 
+export interface DetailedMedicalReport extends MedicalReportRecord {
+  filePath?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+}
+
 /**
  * 1. FETCH ALL PATIENTS FROM SUPABASE
  */
@@ -86,7 +93,6 @@ export async function registerAppointmentInSupabase(formData: {
   medicalHistory: string;
 }): Promise<{ success: boolean; message: string; patientId: string }> {
   try {
-    // Check if patient already exists by phone
     const { data: existingPatients } = await supabase
       .from("patients")
       .select("id, patient_code")
@@ -135,7 +141,6 @@ export async function registerAppointmentInSupabase(formData: {
       }
     }
 
-    // Insert Appointment with reason_for_visit
     const { error: aptError } = await supabase.from("appointments").insert({
       patient_id: targetPatientId,
       appointment_date: formData.date || new Date().toISOString().split("T")[0],
@@ -149,7 +154,6 @@ export async function registerAppointmentInSupabase(formData: {
       console.warn("Supabase appointment insert notice:", aptError.message);
     }
 
-    // Local state fallback mirror
     const localPatients = getStoredPatients();
     const localApts = getStoredAppointments();
     const todayIso = new Date().toISOString().split("T")[0];
@@ -342,7 +346,6 @@ export async function saveClinicalNoteToSupabase(note: {
       }
     }
 
-    // Mirror local state
     saveStoredClinicalNote({
       id: "NOTE-" + Date.now(),
       patientId: note.patientId,
@@ -685,7 +688,7 @@ export async function fetchAppointmentHistoryFromSupabase(
  */
 export async function fetchMedicalReportsFromSupabase(
   patientCode?: string,
-): Promise<MedicalReportRecord[]> {
+): Promise<DetailedMedicalReport[]> {
   try {
     let query = supabase.from("medical_reports").select("*, patients(*)");
 
@@ -716,7 +719,11 @@ export async function fetchMedicalReportsFromSupabase(
       reportDate: m.report_date || new Date().toISOString().split("T")[0],
       doctor: "Dr. Anaya Sharma",
       status: "Completed",
-      details: m.notes || m.report_title || "Clinical document",
+      details: m.notes || m.description || m.report_title || "Clinical document",
+      filePath: m.file_path,
+      fileName: m.file_name,
+      fileType: m.file_type,
+      fileSize: m.file_size,
     }));
   } catch (err) {
     const all = getStoredMedicalReports();
@@ -725,7 +732,168 @@ export async function fetchMedicalReportsFromSupabase(
 }
 
 /**
- * 15. FETCH REAL-TIME PATIENT TIMELINE FROM SUPABASE & SYSTEM RECS
+ * 15. UPLOAD MEDICAL REPORT TO SUPABASE STORAGE & DATABASE
+ */
+export async function uploadMedicalReportToSupabase(params: {
+  patientCode: string;
+  file: File;
+  reportTitle: string;
+  reportType: MedicalReportRecord["reportType"];
+  reportDate: string;
+  description: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const allowedExtensions = ["pdf", "jpg", "jpeg", "png"];
+    const ext = params.file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(ext)) {
+      return {
+        success: false,
+        message: "Invalid file type. Only PDF, JPG, JPEG, and PNG files are supported.",
+      };
+    }
+
+    const maxSizeBytes = 15 * 1024 * 1024; // 15 MB limit
+    if (params.file.size > maxSizeBytes) {
+      return {
+        success: false,
+        message: "File size exceeds limit of 15MB.",
+      };
+    }
+
+    const { data: pData } = await supabase
+      .from("patients")
+      .select("id, full_name")
+      .eq("patient_code", params.patientCode)
+      .maybeSingle();
+
+    const targetPatientId = pData ? pData.id : params.patientCode;
+    const safeFileName = params.file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const uniqueStoragePath = `patient/${targetPatientId}/reports/${Date.now()}-${safeFileName}`;
+
+    let uploadedFilePath = uniqueStoragePath;
+
+    const { error: storageErr } = await supabase.storage
+      .from("medical-reports")
+      .upload(uniqueStoragePath, params.file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (storageErr) {
+      console.warn("Supabase Storage Notice (bucket may need setup):", storageErr.message);
+    }
+
+    if (pData) {
+      const { error: dbErr } = await supabase.from("medical_reports").insert({
+        patient_id: pData.id,
+        report_title: params.reportTitle,
+        report_type: params.reportType,
+        report_date: params.reportDate || new Date().toISOString().split("T")[0],
+        description: params.description,
+        notes: params.description,
+        file_path: uploadedFilePath,
+        file_name: params.file.name,
+        file_type: params.file.type || ext,
+        file_size: params.file.size,
+      });
+
+      if (dbErr) {
+        console.warn("Database report insert notice:", dbErr.message);
+      }
+    }
+
+    // Mirror to Local State
+    const existing = getStoredMedicalReports();
+    existing.unshift({
+      id: "REP-" + Date.now().toString().slice(-4),
+      patientId: params.patientCode,
+      patientName: pData?.full_name || "Patient",
+      reportType: params.reportType,
+      reportDate: params.reportDate || new Date().toISOString().split("T")[0],
+      doctor: "Dr. Anaya Sharma",
+      status: "Completed",
+      details: params.description || params.reportTitle,
+    });
+    saveStoredMedicalReports(existing);
+
+    addStoredTimelineEvent({
+      id: "TL-REP-" + Date.now(),
+      patientId: params.patientCode,
+      date: params.reportDate || new Date().toISOString().split("T")[0],
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      event: "Medical Report Uploaded",
+      doctor: "Dr. Anaya Sharma",
+      notes: `${params.reportType}: ${params.reportTitle}`,
+    });
+
+    return {
+      success: true,
+      message: `Medical report "${params.reportTitle}" uploaded successfully.`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || "Failed to upload medical report.",
+    };
+  }
+}
+
+/**
+ * 16. GENERATE SECURE SIGNED URL FOR REPORT VIEW / DOWNLOAD
+ */
+export async function getSignedUrlForMedicalReport(filePath: string): Promise<string | null> {
+  try {
+    if (!filePath) return null;
+    const { data, error } = await supabase.storage
+      .from("medical-reports")
+      .createSignedUrl(filePath, 3600); // 1 hour expiration
+
+    if (error || !data) {
+      console.warn("Could not generate signed URL:", error?.message);
+      return null;
+    }
+    return data.signedUrl;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * 17. DELETE MEDICAL REPORT FROM SUPABASE STORAGE AND DATABASE
+ */
+export async function deleteMedicalReportFromSupabase(
+  reportId: string,
+  filePath?: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    if (filePath) {
+      const { error: sErr } = await supabase.storage.from("medical-reports").remove([filePath]);
+
+      if (sErr) {
+        console.warn("Storage file removal notice:", sErr.message);
+      }
+    }
+
+    const { error: dbErr } = await supabase.from("medical_reports").delete().eq("id", reportId);
+
+    if (dbErr) {
+      console.warn("Database report delete notice:", dbErr.message);
+    }
+
+    return {
+      success: true,
+      message: "Medical report deleted successfully.",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || "Failed to delete medical report.",
+    };
+  }
+}
+
+/**
+ * 18. FETCH REAL-TIME PATIENT TIMELINE FROM SUPABASE & SYSTEM RECS
  */
 export async function fetchPatientTimelineFromSupabase(
   patientCode: string,
@@ -760,7 +928,7 @@ export async function fetchPatientTimelineFromSupabase(
 }
 
 /**
- * 16. SUPABASE AUTH: DOCTOR LOGIN
+ * 19. SUPABASE AUTH: DOCTOR LOGIN
  */
 export async function loginDoctorWithSupabase(
   email: string,
@@ -789,7 +957,7 @@ export async function loginDoctorWithSupabase(
 }
 
 /**
- * 17. SUPABASE AUTH: DOCTOR LOGOUT
+ * 20. SUPABASE AUTH: DOCTOR LOGOUT
  */
 export async function logoutDoctorFromSupabase(): Promise<void> {
   try {

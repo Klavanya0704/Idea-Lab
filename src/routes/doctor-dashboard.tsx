@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -35,7 +35,10 @@ import {
   Check,
   Printer,
   Loader2,
-  UserCheck,
+  Upload,
+  Download,
+  ExternalLink,
+  FileUp,
 } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import {
@@ -52,11 +55,14 @@ import {
   fetchFollowupsFromSupabase,
   fetchAppointmentHistoryFromSupabase,
   fetchMedicalReportsFromSupabase,
+  uploadMedicalReportToSupabase,
+  getSignedUrlForMedicalReport,
+  deleteMedicalReportFromSupabase,
   fetchPatientTimelineFromSupabase,
   updateAppointmentStatusInSupabase,
+  type DetailedMedicalReport,
 } from "@/lib/clinicalService";
 import {
-  getStoredMedicalReports,
   type PatientRecord,
   type AppointmentRecord,
   type ClinicalNoteRecord,
@@ -92,7 +98,7 @@ function DoctorDashboardPage() {
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>([]);
-  const [reports, setReports] = useState<MedicalReportRecord[]>([]);
+  const [reports, setReports] = useState<DetailedMedicalReport[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(true);
 
   // Navigation State
@@ -117,7 +123,7 @@ function DoctorDashboardPage() {
   const [patientTreatmentsList, setPatientTreatmentsList] = useState<TreatmentHistoryRecord[]>([]);
   const [patientRxList, setPatientRxList] = useState<PrescriptionRecord[]>([]);
   const [patientAptsList, setPatientAptsList] = useState<AppointmentRecord[]>([]);
-  const [patientReportsList, setPatientReportsList] = useState<MedicalReportRecord[]>([]);
+  const [patientReportsList, setPatientReportsList] = useState<DetailedMedicalReport[]>([]);
   const [patientFollowupsList, setPatientFollowupsList] = useState<any[]>([]);
   const [patientTimelineList, setPatientTimelineList] = useState<TimelineEvent[]>([]);
 
@@ -126,21 +132,22 @@ function DoctorDashboardPage() {
   const [isSavingTreatment, setIsSavingTreatment] = useState(false);
   const [isSavingRx, setIsSavingRx] = useState(false);
   const [isSchedulingFollowup, setIsSchedulingFollowup] = useState(false);
+  const [isUploadingReport, setIsUploadingReport] = useState(false);
 
-  // Form States for Clinical Record Entry
+  // Clinical Notes Form
   const [diagnosis, setDiagnosis] = useState("");
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [observations, setObservations] = useState("");
   const [isEditingNote, setIsEditingNote] = useState(false);
 
-  // New Treatment Entry Form State
+  // Treatment Entry Form
   const [trtName, setTrtName] = useState("");
   const [trtDiagnosis, setTrtDiagnosis] = useState("");
   const [trtDate, setTrtDate] = useState("2026-09-02");
   const [trtStatus, setTrtStatus] = useState("Completed");
   const [trtNotes, setTrtNotes] = useState("");
 
-  // Prescription Form State
+  // Prescription Form
   const [medicines, setMedicines] = useState<PrescriptionItem[]>([]);
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
@@ -148,12 +155,26 @@ function DoctorDashboardPage() {
   const [medDuration, setMedDuration] = useState("5 days");
   const [medInstructions, setMedInstructions] = useState("After meals");
 
-  // Follow-up Form State
+  // Follow-up Form
   const [followupDate, setFollowupDate] = useState("2026-09-15");
   const [followupTime, setFollowupTime] = useState("11:00 AM");
   const [followupPurpose, setFollowupPurpose] = useState("Post-treatment checkup");
 
-  // Print Preview Modal State
+  // Report Upload Form
+  const [reportTitle, setReportTitle] = useState("");
+  const [reportType, setReportType] = useState<MedicalReportRecord["reportType"]>("Dental X-Ray");
+  const [reportDate, setReportDate] = useState("2026-09-02");
+  const [reportDescription, setReportDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Report Preview Modal State
+  const [viewingReport, setViewingReport] = useState<{
+    report: DetailedMedicalReport;
+    signedUrl: string | null;
+  } | null>(null);
+
+  // Print Preview State
   const [printingRx, setPrintingRx] = useState<PrescriptionRecord | null>(null);
 
   // Toast Notification State
@@ -224,7 +245,7 @@ function DoctorDashboardPage() {
     };
   }, [patients, appointments]);
 
-  // Today's Appointments (Chronological)
+  // Today's Appointments
   const todaysSchedule = useMemo(() => {
     const todayStr = "2026-09-02";
     return appointments
@@ -498,6 +519,114 @@ function DoctorDashboardPage() {
       console.error("Schedule followup error:", err);
     } finally {
       setIsSchedulingFollowup(false);
+    }
+  };
+
+  // UPLOAD MEDICAL REPORT TO SUPABASE STORAGE
+  const handleUploadReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatient) return;
+    if (!reportTitle.trim()) {
+      alert("Please enter a report title.");
+      return;
+    }
+    if (!selectedFile) {
+      alert("Please select a file to upload (PDF, JPG, JPEG, PNG).");
+      return;
+    }
+
+    setIsUploadingReport(true);
+
+    try {
+      const res = await uploadMedicalReportToSupabase({
+        patientCode: selectedPatient.id,
+        file: selectedFile,
+        reportTitle,
+        reportType,
+        reportDate,
+        description: reportDescription || reportTitle,
+      });
+
+      if (res.success) {
+        showToast(res.message);
+        setReportTitle("");
+        setReportDescription("");
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+
+        const [updatedReps, updatedTline, updatedAllReps] = await Promise.all([
+          fetchMedicalReportsFromSupabase(selectedPatient.id),
+          fetchPatientTimelineFromSupabase(selectedPatient.id),
+          fetchMedicalReportsFromSupabase(),
+        ]);
+
+        setPatientReportsList(updatedReps);
+        setPatientTimelineList(updatedTline);
+        setReports(updatedAllReps);
+      } else {
+        alert(res.message);
+      }
+    } catch (err: any) {
+      alert("Unable to upload medical report: " + err.message);
+    } finally {
+      setIsUploadingReport(false);
+    }
+  };
+
+  // VIEW MEDICAL REPORT (SIGNED URL PREVIEW)
+  const handleViewReport = async (rep: DetailedMedicalReport) => {
+    let signedUrl: string | null = null;
+
+    if (rep.filePath) {
+      signedUrl = await getSignedUrlForMedicalReport(rep.filePath);
+    }
+
+    setViewingReport({
+      report: rep,
+      signedUrl,
+    });
+  };
+
+  // DOWNLOAD MEDICAL REPORT SECURELY
+  const handleDownloadReport = async (rep: DetailedMedicalReport) => {
+    let downloadUrl: string | null = null;
+
+    if (rep.filePath) {
+      downloadUrl = await getSignedUrlForMedicalReport(rep.filePath);
+    }
+
+    if (downloadUrl) {
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.target = "_blank";
+      link.download = rep.fileName || `${rep.reportTitle}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`Downloading report: ${rep.reportTitle}`);
+    } else {
+      alert(`Report file notice: ${rep.details}`);
+    }
+  };
+
+  // DELETE MEDICAL REPORT
+  const handleDeleteReport = async (rep: DetailedMedicalReport) => {
+    if (!confirm(`Are you sure you want to delete "${rep.details || rep.reportType}"?`)) {
+      return;
+    }
+
+    const res = await deleteMedicalReportFromSupabase(rep.id, rep.filePath);
+
+    if (res.success) {
+      showToast("Report deleted successfully.");
+      if (selectedPatient) {
+        const updatedReps = await fetchMedicalReportsFromSupabase(selectedPatient.id);
+        setPatientReportsList(updatedReps);
+      }
+      const updatedAllReps = await fetchMedicalReportsFromSupabase();
+      setReports(updatedAllReps);
+    } else {
+      alert(res.message);
     }
   };
 
@@ -961,7 +1090,7 @@ function DoctorDashboardPage() {
             </>
           )}
 
-          {/* TAB 2: PATIENT REGISTRY (RESPONSIVE CARDS ON MOBILE/TABLET) */}
+          {/* TAB 2: PATIENT REGISTRY */}
           {!loadingData && activeTab === "patients" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1330,14 +1459,14 @@ function DoctorDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-xl font-bold text-foreground sm:text-2xl">
-                    Medical Reports
+                    Medical Reports Repository
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Radiology scans, clinical notes, and prescription logs
+                    Radiology scans, clinical reports, and medical attachments
                   </p>
                 </div>
                 <span className="rounded-full bg-brand-purple/10 px-3 py-1 text-xs font-bold text-brand-purple">
-                  {reports.length} Reports
+                  {reports.length} Uploaded Reports
                 </span>
               </div>
 
@@ -1383,14 +1512,14 @@ function DoctorDashboardPage() {
                               {rep.status}
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center flex items-center justify-center gap-2">
                             <button
                               onClick={() => {
                                 if (pRecord) handleOpenPatientModal(pRecord);
                               }}
-                              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors"
+                              className="inline-flex items-center gap-1 rounded-xl border border-border bg-white px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors"
                             >
-                              <Eye className="h-3.5 w-3.5" /> Open Report
+                              <Eye className="h-3.5 w-3.5" /> View Profile
                             </button>
                           </td>
                         </tr>
@@ -1463,7 +1592,7 @@ function DoctorDashboardPage() {
       {selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-4xl overflow-hidden rounded-[28px] border border-border bg-white shadow-2xl animate-in zoom-in-95 flex flex-col max-h-[92vh]">
-            {/* Modal Top Header Bar */}
+            {/* Modal Header Bar */}
             <div className="flex items-center justify-between bg-[linear-gradient(135deg,#3155D9_0%,#4F36DD_50%,#6B35D9_100%)] p-6 text-white shrink-0">
               <div className="flex items-center gap-3.5">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/20 text-white font-bold text-base shadow-xs backdrop-blur-md">
@@ -1567,7 +1696,7 @@ function DoctorDashboardPage() {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <FileCheck2 className="h-3.5 w-3.5" /> Reports
+                <FileCheck2 className="h-3.5 w-3.5" /> Reports ({patientReportsList.length})
               </button>
 
               <button
@@ -1611,11 +1740,11 @@ function DoctorDashboardPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Patient Information */}
                     <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2 text-xs">
                       <h4 className="font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" /> Patient Demographics
+                        <Users className="h-3.5 w-3.5" /> Demographics
                       </h4>
                       <div className="space-y-1.5 pt-1">
                         <p>
@@ -1652,7 +1781,7 @@ function DoctorDashboardPage() {
                     {/* Medical History & Allergies */}
                     <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2 text-xs">
                       <h4 className="font-bold text-brand uppercase tracking-wider flex items-center gap-1.5">
-                        <AlertCircle className="h-3.5 w-3.5" /> Clinical Alerts & History
+                        <AlertCircle className="h-3.5 w-3.5" /> Clinical Alerts
                       </h4>
                       <div className="space-y-1.5 pt-1">
                         <p>
@@ -1679,6 +1808,30 @@ function DoctorDashboardPage() {
                             {patientNotesList[0]?.diagnosis || "No records available"}
                           </span>
                         </p>
+                      </div>
+                    </div>
+
+                    {/* Reports Summary Card */}
+                    <div className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 space-y-2 text-xs">
+                      <h4 className="font-bold text-brand-purple uppercase tracking-wider flex items-center gap-1.5">
+                        <FileCheck2 className="h-3.5 w-3.5" /> Medical Reports Summary
+                      </h4>
+                      <div className="space-y-1.5 pt-1">
+                        <p className="font-bold text-foreground text-sm">
+                          {patientReportsList.length > 0
+                            ? `${patientReportsList.length} report${patientReportsList.length > 1 ? "s" : ""} available`
+                            : "No medical reports available."}
+                        </p>
+                        <p className="text-muted-foreground text-[11px]">
+                          Radiology X-Rays, treatment notes, and lab diagnostic files stored in
+                          Supabase.
+                        </p>
+                        <button
+                          onClick={() => setActiveModalTab("reports")}
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                        >
+                          Manage Reports <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -2161,38 +2314,199 @@ function DoctorDashboardPage() {
                 </div>
               )}
 
-              {/* TAB 6: MEDICAL REPORTS */}
+              {/* TAB 6: MEDICAL REPORTS (SUPABASE STORAGE INTEGRATED) */}
               {activeModalTab === "reports" && (
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <FileCheck2 className="h-4 w-4 text-brand" /> PATIENT MEDICAL REPORTS
-                  </h4>
+                <div className="space-y-6">
+                  {/* UPLOAD REPORT FORM */}
+                  <form
+                    onSubmit={handleUploadReport}
+                    className="rounded-2xl border border-border/80 bg-slate-50/80 p-5 space-y-4"
+                  >
+                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <FileUp className="h-4 w-4 text-brand" /> Upload Medical Report to Supabase
+                      Storage
+                    </h4>
 
-                  {patientReportsList.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">
-                      No medical reports available.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {patientReportsList.map((r) => (
-                        <div
-                          key={r.id}
-                          className="rounded-2xl border border-border/80 bg-slate-50/70 p-4 text-xs flex items-center justify-between"
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label
+                          htmlFor="rep-title"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
                         >
-                          <div>
-                            <span className="font-bold text-foreground">{r.reportType}</span> —{" "}
-                            <span className="text-muted-foreground">{r.details}</span>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              Date: {formatDate(r.reportDate)}
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-                            {r.status}
-                          </span>
-                        </div>
-                      ))}
+                          Report Title *
+                        </label>
+                        <input
+                          id="rep-title"
+                          type="text"
+                          value={reportTitle}
+                          onChange={(e) => setReportTitle(e.target.value)}
+                          placeholder="e.g. Panoramic X-Ray Scan"
+                          required
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none focus:border-brand"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="rep-type"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
+                          Report Type
+                        </label>
+                        <select
+                          id="rep-type"
+                          value={reportType}
+                          onChange={(e) =>
+                            setReportType(e.target.value as MedicalReportRecord["reportType"])
+                          }
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none"
+                        >
+                          <option value="Dental X-Ray">Dental X-Ray</option>
+                          <option value="Clinical Report">Clinical Report</option>
+                          <option value="Treatment Report">Treatment Report</option>
+                          <option value="Prescription">Prescription Scan</option>
+                          <option value="Other">Other Document</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="rep-date"
+                          className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                        >
+                          Report Date
+                        </label>
+                        <input
+                          id="rep-date"
+                          type="date"
+                          value={reportDate}
+                          onChange={(e) => setReportDate(e.target.value)}
+                          className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-semibold text-foreground outline-none focus:border-brand"
+                        />
+                      </div>
                     </div>
-                  )}
+
+                    <div>
+                      <label
+                        htmlFor="rep-desc"
+                        className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                      >
+                        Description / Clinical Summary
+                      </label>
+                      <input
+                        id="rep-desc"
+                        type="text"
+                        value={reportDescription}
+                        onChange={(e) => setReportDescription(e.target.value)}
+                        placeholder="Brief summary of findings or lab details..."
+                        className="w-full rounded-xl border border-border bg-white p-2.5 text-xs font-medium text-foreground outline-none focus:border-brand"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="rep-file"
+                        className="block text-[11px] font-semibold text-muted-foreground mb-1"
+                      >
+                        Select File (PDF, JPG, JPEG, PNG • Max 15MB) *
+                      </label>
+                      <input
+                        id="rep-file"
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        required
+                        className="w-full text-xs font-medium text-muted-foreground file:mr-3 file:rounded-xl file:border-0 file:bg-brand/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand hover:file:bg-brand/20 cursor-pointer"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isUploadingReport}
+                      className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-xs font-semibold text-white shadow-soft disabled:opacity-75"
+                    >
+                      {isUploadingReport ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span>Upload Medical Report</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {/* REPORT REPOSITORY LIST */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <FileCheck2 className="h-4 w-4 text-brand" /> STORED PATIENT MEDICAL REPORTS
+                    </h4>
+
+                    {patientReportsList.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">
+                        No medical reports available.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {patientReportsList.map((r) => (
+                          <div
+                            key={r.id}
+                            className="rounded-2xl border border-border/80 bg-white p-4 text-xs flex flex-wrap items-center justify-between gap-3 shadow-xs hover:border-brand/30 transition-all"
+                          >
+                            <div className="space-y-1 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-foreground text-sm">
+                                  {r.details || r.reportType}
+                                </span>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 font-bold text-foreground text-[10px]">
+                                  {r.reportType}
+                                </span>
+                              </div>
+                              <p className="text-muted-foreground">
+                                Date:{" "}
+                                <span className="font-medium text-foreground">
+                                  {formatDate(r.reportDate)}
+                                </span>{" "}
+                                • Doctor: {r.doctor}
+                              </p>
+                              {r.fileName && (
+                                <p className="font-mono text-[11px] text-brand-purple">
+                                  File: {r.fileName} (
+                                  {r.fileSize ? Math.round(r.fileSize / 1024) + " KB" : "Attached"})
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleViewReport(r)}
+                                className="inline-flex items-center gap-1 rounded-xl border border-border bg-slate-50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors"
+                              >
+                                <Eye className="h-3.5 w-3.5" /> View
+                              </button>
+                              <button
+                                onClick={() => handleDownloadReport(r)}
+                                className="inline-flex items-center gap-1 rounded-xl border border-border bg-slate-50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-slate-200 transition-colors"
+                              >
+                                <Download className="h-3.5 w-3.5" /> Download
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReport(r)}
+                                className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-600 hover:text-white transition-colors"
+                                aria-label="Delete report"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -2320,6 +2634,70 @@ function DoctorDashboardPage() {
                 className="rounded-xl border border-border bg-slate-200/80 px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-300 transition-colors"
               >
                 Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REPORT VIEW PREVIEW MODAL */}
+      {viewingReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-white p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="font-display text-base font-bold text-foreground">
+                  {viewingReport.report.details || viewingReport.report.reportType}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Patient Code: {viewingReport.report.patientId} • Date:{" "}
+                  {formatDate(viewingReport.report.reportDate)}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingReport(null)}
+                className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-foreground hover:bg-slate-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-[250px] bg-slate-100 rounded-2xl p-4 flex items-center justify-center">
+              {viewingReport.signedUrl ? (
+                viewingReport.report.fileType?.includes("pdf") ? (
+                  <iframe
+                    src={viewingReport.signedUrl}
+                    className="w-full h-[380px] rounded-xl border-none"
+                    title="PDF Medical Report Preview"
+                  />
+                ) : (
+                  <img
+                    src={viewingReport.signedUrl}
+                    alt={viewingReport.report.reportTitle}
+                    className="max-h-[380px] rounded-xl object-contain shadow-md"
+                  />
+                )
+              ) : (
+                <div className="text-center space-y-2 text-xs text-muted-foreground p-6">
+                  <FileText className="h-10 w-10 mx-auto text-brand" />
+                  <p className="font-semibold text-foreground">{viewingReport.report.details}</p>
+                  <p>Document stored securely in Supabase clinical repository.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                onClick={() => handleDownloadReport(viewingReport.report)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2 text-xs font-semibold text-white shadow-soft"
+              >
+                <Download className="h-4 w-4" /> Secure Download
+              </button>
+              <button
+                onClick={() => setViewingReport(null)}
+                className="rounded-full border border-border px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+              >
+                Close Preview
               </button>
             </div>
           </div>
