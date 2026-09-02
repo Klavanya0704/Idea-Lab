@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Calendar,
@@ -82,6 +82,13 @@ export const Route = createFileRoute("/doctor-dashboard")({
 });
 
 function DoctorDashboardPage() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logoutDoctorFromSupabase();
+    navigate({ to: "/doctor-login" });
+  };
+
   // Main Data States loaded from Storage
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
@@ -507,12 +514,12 @@ function DoctorDashboardPage() {
               <p className="text-[11px] text-muted-foreground truncate">Chief Dental Surgeon</p>
             </div>
           </div>
-          <Link
-            to="/doctor-login"
+          <button
+            onClick={handleLogout}
             className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-white py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
-          </Link>
+          </button>
         </div>
       </aside>
 
