@@ -124,7 +124,7 @@ function DoctorDashboardPage() {
   const [patientRxList, setPatientRxList] = useState<PrescriptionRecord[]>([]);
   const [patientAptsList, setPatientAptsList] = useState<AppointmentRecord[]>([]);
   const [patientReportsList, setPatientReportsList] = useState<DetailedMedicalReport[]>([]);
-  const [patientFollowupsList, setPatientFollowupsList] = useState<any[]>([]);
+  const [patientFollowupsList, setPatientFollowupsList] = useState<Record<string, unknown>[]>([]);
   const [patientTimelineList, setPatientTimelineList] = useState<TimelineEvent[]>([]);
 
   // Form Loading States
@@ -566,8 +566,9 @@ function DoctorDashboardPage() {
       } else {
         alert(res.message);
       }
-    } catch (err: any) {
-      alert("Unable to upload medical report: " + err.message);
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      alert("Unable to upload medical report: " + errorObj.message);
     } finally {
       setIsUploadingReport(false);
     }

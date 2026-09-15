@@ -49,15 +49,15 @@ export async function fetchPatientsFromSupabase(): Promise<PatientRecord[]> {
       return getStoredPatients();
     }
 
-    return data.map((p: any) => ({
-      id: p.patient_code || p.id,
-      dbId: p.id,
-      name: p.full_name,
-      age: p.age || "N/A",
-      gender: p.gender || "Female",
-      phone: p.phone,
-      email: p.email || "",
-      address: p.address || "New Delhi, India",
+    return data.map((p: Record<string, unknown>) => ({
+      id: (p.patient_code as string) || (p.id as string),
+      dbId: p.id as string,
+      name: p.full_name as string,
+      age: (p.age as string) || "N/A",
+      gender: (p.gender as string) || "Female",
+      phone: p.phone as string,
+      email: (p.email as string) || "",
+      address: (p.address as string) || "New Delhi, India",
       registrationDate: p.registration_date || new Date().toISOString().split("T")[0],
       registrationTime: p.registration_time || "09:30 AM",
       patientType: p.patient_type || "New Patient",
@@ -204,7 +204,7 @@ export async function registerAppointmentInSupabase(formData: {
       message: `Appointment confirmed for ${formData.name}. Patient ID: ${patientCode}`,
       patientId: patientCode,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error registering appointment in Supabase:", err);
     return {
       success: true,
@@ -230,19 +230,22 @@ export async function fetchTodaysAppointmentsFromSupabase(): Promise<Appointment
       return getStoredAppointments();
     }
 
-    return data.map((a: any) => ({
-      id: a.id,
-      patientId: a.patients?.patient_code || "P001",
-      patientName: a.patients?.full_name || "Patient",
-      phone: a.patients?.phone || "+91 98765 00000",
-      email: a.patients?.email || "",
-      date: a.appointment_date,
-      time: a.appointment_time,
-      treatment: a.treatment,
-      reasonForVisit: a.reason_for_visit || "General Checkup",
-      status: a.status || "Confirmed",
-      doctor: "Dr. Anaya Sharma",
-    }));
+    return data.map((a: Record<string, unknown>) => {
+      const patient = a.patients as Record<string, unknown> | undefined;
+      return {
+        id: a.id as string,
+        patientId: (patient?.patient_code as string) || "P001",
+        patientName: (patient?.full_name as string) || "Patient",
+        phone: (patient?.phone as string) || "+91 98765 00000",
+        email: (patient?.email as string) || "",
+        date: a.appointment_date as string,
+        time: a.appointment_time as string,
+        treatment: a.treatment as string,
+        reasonForVisit: (a.reason_for_visit as string) || "General Checkup",
+        status: (a.status as string) || "Confirmed",
+        doctor: "Dr. Anaya Sharma",
+      };
+    });
   } catch (err) {
     return getStoredAppointments();
   }
@@ -299,16 +302,19 @@ export async function fetchClinicalNotesFromSupabase(
       return local ? [local] : [];
     }
 
-    return data.map((c: any) => ({
-      id: c.id,
+    return data.map((c: Record<string, unknown>) => ({
+      id: c.id as string,
       patientId: patientCode,
-      date: c.created_at ? c.created_at.split("T")[0] : "2026-09-02",
-      diagnosis: c.diagnosis || "No diagnosis details",
-      treatmentNotes: c.notes || "",
-      observations: c.findings || "",
+      date: c.created_at ? (c.created_at as string).split("T")[0] : "2026-09-02",
+      diagnosis: (c.diagnosis as string) || "No diagnosis details",
+      treatmentNotes: (c.notes as string) || "",
+      observations: (c.findings as string) || "",
       doctor: "Dr. Anaya Sharma",
       updatedAt: c.updated_at
-        ? new Date(c.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        ? new Date(c.updated_at as string).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : "10:30 AM",
     }));
   } catch (err) {
@@ -391,16 +397,19 @@ export async function fetchTreatmentRecordsFromSupabase(
       return patientCode ? all.filter((t) => t.patientId === patientCode) : all;
     }
 
-    return data.map((t: any) => ({
-      id: t.id,
-      patientId: t.patients?.patient_code || patientCode || "P001",
-      patientName: t.patients?.full_name || "Patient",
-      treatment: t.treatment || "General Checkup",
-      diagnosis: t.diagnosis || "No details",
-      treatmentDate: t.treatment_date || new Date().toISOString().split("T")[0],
-      doctor: "Dr. Anaya Sharma",
-      status: t.notes || "Completed",
-    }));
+    return data.map((t: Record<string, unknown>) => {
+      const patient = t.patients as Record<string, unknown> | undefined;
+      return {
+        id: t.id as string,
+        patientId: (patient?.patient_code as string) || patientCode || "P001",
+        patientName: (patient?.full_name as string) || "Patient",
+        treatment: (t.treatment as string) || "General Checkup",
+        diagnosis: (t.diagnosis as string) || "No details",
+        treatmentDate: (t.treatment_date as string) || new Date().toISOString().split("T")[0],
+        doctor: "Dr. Anaya Sharma",
+        status: (t.notes as string) || "Completed",
+      };
+    });
   } catch (err) {
     const all = getStoredTreatmentRecords();
     return patientCode ? all.filter((t) => t.patientId === patientCode) : all;
@@ -485,22 +494,24 @@ export async function fetchPrescriptionHistoryFromSupabase(
       return rx ? [rx] : [];
     }
 
-    return data.map((r: any) => ({
-      id: r.id,
+    return data.map((r: Record<string, unknown>) => ({
+      id: r.id as string,
       patientId: patientCode,
       patientName: "Patient",
-      date: r.prescription_date || new Date().toISOString().split("T")[0],
+      date: (r.prescription_date as string) || new Date().toISOString().split("T")[0],
       doctor: "Dr. Anaya Sharma",
-      medicines: (r.prescription_items || []).map((m: any) => ({
-        id: m.id,
-        medicine: m.medicine_name,
-        dosage: m.dosage || "1 Tablet",
-        frequency: m.frequency || "Twice daily",
-        duration: m.duration || "5 days",
-        instructions: m.instructions || "After meals",
-      })),
-      diagnosis: r.diagnosis,
-      notes: r.instructions,
+      medicines: ((r.prescription_items as Record<string, unknown>[]) || []).map(
+        (m: Record<string, unknown>) => ({
+          id: m.id as string,
+          medicine: m.medicine_name as string,
+          dosage: (m.dosage as string) || "1 Tablet",
+          frequency: (m.frequency as string) || "Twice daily",
+          duration: (m.duration as string) || "5 days",
+          instructions: (m.instructions as string) || "After meals",
+        }),
+      ),
+      diagnosis: r.diagnosis as string,
+      notes: r.instructions as string,
     }));
   } catch (err) {
     const rx = getStoredPrescription(patientCode);
@@ -570,7 +581,9 @@ export async function savePrescriptionToSupabase(rx: {
 /**
  * 11. FETCH FOLLOW-UPS FROM SUPABASE
  */
-export async function fetchFollowupsFromSupabase(patientCode: string): Promise<any[]> {
+export async function fetchFollowupsFromSupabase(
+  patientCode: string,
+): Promise<Record<string, unknown>[]> {
   try {
     const { data: pData } = await supabase
       .from("patients")
@@ -664,19 +677,22 @@ export async function fetchAppointmentHistoryFromSupabase(
       return all.filter((a) => a.patientId === patientCode);
     }
 
-    return data.map((a: any) => ({
-      id: a.id,
-      patientId: patientCode,
-      patientName: a.patients?.full_name || "Patient",
-      phone: a.patients?.phone || "+91 98765 00000",
-      email: a.patients?.email || "",
-      date: a.appointment_date,
-      time: a.appointment_time,
-      treatment: a.treatment,
-      reasonForVisit: a.reason_for_visit || "General Checkup",
-      status: a.status || "Confirmed",
-      doctor: "Dr. Anaya Sharma",
-    }));
+    return data.map((a: Record<string, unknown>) => {
+      const patient = a.patients as Record<string, unknown> | undefined;
+      return {
+        id: a.id as string,
+        patientId: patientCode,
+        patientName: (patient?.full_name as string) || "Patient",
+        phone: (patient?.phone as string) || "+91 98765 00000",
+        email: (patient?.email as string) || "",
+        date: a.appointment_date as string,
+        time: a.appointment_time as string,
+        treatment: a.treatment as string,
+        reasonForVisit: (a.reason_for_visit as string) || "General Checkup",
+        status: (a.status as string) || "Confirmed",
+        doctor: "Dr. Anaya Sharma",
+      };
+    });
   } catch (err) {
     const all = getStoredAppointments();
     return all.filter((a) => a.patientId === patientCode);
@@ -711,20 +727,27 @@ export async function fetchMedicalReportsFromSupabase(
       return patientCode ? all.filter((r) => r.patientId === patientCode) : all;
     }
 
-    return data.map((m: any) => ({
-      id: m.id,
-      patientId: m.patients?.patient_code || patientCode || "P001",
-      patientName: m.patients?.full_name || "Patient",
-      reportType: m.report_type as MedicalReportRecord["reportType"],
-      reportDate: m.report_date || new Date().toISOString().split("T")[0],
-      doctor: "Dr. Anaya Sharma",
-      status: "Completed",
-      details: m.notes || m.description || m.report_title || "Clinical document",
-      filePath: m.file_path,
-      fileName: m.file_name,
-      fileType: m.file_type,
-      fileSize: m.file_size,
-    }));
+    return data.map((m: Record<string, unknown>) => {
+      const patient = m.patients as Record<string, unknown> | undefined;
+      return {
+        id: m.id as string,
+        patientId: (patient?.patient_code as string) || patientCode || "P001",
+        patientName: (patient?.full_name as string) || "Patient",
+        reportType: m.report_type as MedicalReportRecord["reportType"],
+        reportDate: (m.report_date as string) || new Date().toISOString().split("T")[0],
+        doctor: "Dr. Anaya Sharma",
+        status: "Completed",
+        details:
+          (m.notes as string) ||
+          (m.description as string) ||
+          (m.report_title as string) ||
+          "Clinical document",
+        filePath: m.file_path as string,
+        fileName: m.file_name as string,
+        fileType: m.file_type as string,
+        fileSize: m.file_size as number,
+      };
+    });
   } catch (err) {
     const all = getStoredMedicalReports();
     return patientCode ? all.filter((r) => r.patientId === patientCode) : all;
@@ -770,7 +793,7 @@ export async function uploadMedicalReportToSupabase(params: {
     const safeFileName = params.file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const uniqueStoragePath = `patient/${targetPatientId}/reports/${Date.now()}-${safeFileName}`;
 
-    let uploadedFilePath = uniqueStoragePath;
+    const uploadedFilePath = uniqueStoragePath;
 
     const { error: storageErr } = await supabase.storage
       .from("medical-reports")
@@ -830,10 +853,11 @@ export async function uploadMedicalReportToSupabase(params: {
       success: true,
       message: `Medical report "${params.reportTitle}" uploaded successfully.`,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
     return {
       success: false,
-      message: err.message || "Failed to upload medical report.",
+      message: errorObj.message || "Failed to upload medical report.",
     };
   }
 }
@@ -884,10 +908,11 @@ export async function deleteMedicalReportFromSupabase(
       success: true,
       message: "Medical report deleted successfully.",
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
     return {
       success: false,
-      message: err.message || "Failed to delete medical report.",
+      message: errorObj.message || "Failed to delete medical report.",
     };
   }
 }
@@ -948,11 +973,12 @@ export async function loginDoctorWithSupabase(
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
     if (email.toLowerCase() === "doctor@smilecare.com" && pass === "smile123") {
       return { success: true };
     }
-    return { success: false, error: err.message || "Authentication error" };
+    return { success: false, error: errorObj.message || "Authentication error" };
   }
 }
 
