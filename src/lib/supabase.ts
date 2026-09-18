@@ -1,17 +1,34 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+// Read Supabase credentials safely from Vite environment or node process env
+const rawUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  (typeof process !== "undefined" && process.env?.VITE_SUPABASE_URL) ||
+  "";
 
-if (!supabaseUrl || !supabaseAnonKey) {
+const rawKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  (typeof process !== "undefined" && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
+  "";
+
+// Fallback to placeholder URL format if missing, preventing createClient from throwing an unhandled exception at module load during SSR
+const supabaseUrl = rawUrl.trim() || "https://placeholder.supabase.co";
+const supabaseAnonKey = rawKey.trim() || "placeholder-anon-key";
+
+export const isSupabaseConfigured = Boolean(rawUrl.trim() && rawKey.trim());
+
+if (!isSupabaseConfigured) {
   console.warn(
-    "⚠️ Supabase configuration missing! Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are set in .env",
+    "⚠️ Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY) are not set. Ensure they are configured in Vercel project environment variables.",
   );
 }
 
+const isBrowser = typeof window !== "undefined";
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
+    persistSession: isBrowser,
+    autoRefreshToken: isBrowser,
+    detectSessionInUrl: isBrowser,
   },
 });
