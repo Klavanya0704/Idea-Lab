@@ -19,7 +19,7 @@ import {
   Phone,
 } from "lucide-react";
 import clinicBg from "@/assets/clinic-background.jpg";
-import doctorPortrait from "@/assets/doctor-portrait.jpg";
+import doctorCutout from "@/assets/doctor-cutout.png";
 import { Logo, ToothIcon } from "@/components/site/Logo";
 import { loginDoctorWithSupabase } from "@/lib/clinicalService";
 
@@ -234,12 +234,12 @@ function DoctorLoginPage() {
               </div>
             </div>
 
-            {/* 5. Doctor Image: Clean Integrated Dentist with White Coat & Blue Scrubs */}
+            {/* 5. Doctor Image: True 32-bit RGBA Alpha Transparent PNG Cutout (No white box, no checkerboard) */}
             <div className="relative flex items-end justify-center h-full min-h-[320px]">
               <img
-                src={doctorPortrait}
+                src={doctorCutout}
                 alt="SmileCare Specialist Doctor"
-                className="absolute bottom-0 right-0 sm:-right-2 w-full max-w-[340px] sm:max-w-[410px] lg:max-w-[450px] h-auto object-contain object-bottom pointer-events-none z-10 mix-blend-multiply drop-shadow-[0_20px_35px_rgba(0,0,0,0.3)] [mask-image:linear-gradient(to_bottom,black_82%,transparent_100%)]"
+                className="absolute bottom-0 right-0 sm:-right-2 w-full max-w-[340px] sm:max-w-[410px] lg:max-w-[450px] h-auto object-contain object-bottom pointer-events-none z-10 drop-shadow-[0_20px_35px_rgba(0,0,0,0.3)]"
               />
 
               {/* 10. Floating Doctor Badge */}
