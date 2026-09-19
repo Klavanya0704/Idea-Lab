@@ -1038,7 +1038,7 @@ function DoctorDashboardPage() {
                   <img
                     src={doctorCutout}
                     alt="Dr. Anaya Sharma"
-                    className="absolute bottom-0 right-12 sm:right-20 lg:right-24 h-[320px] sm:h-[355px] lg:h-[380px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.18)]"
+                    className="absolute bottom-0 right-28 sm:right-36 lg:right-44 xl:right-48 h-[310px] sm:h-[345px] lg:h-[370px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.18)]"
                   />
                 </div>
 
