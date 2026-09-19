@@ -68,6 +68,10 @@ import {
   type DetailedMedicalReport,
 } from "@/lib/clinicalService";
 import {
+  getStoredPatients,
+  getStoredAppointments,
+  getStoredTreatmentRecords,
+  getStoredMedicalReports,
   type PatientRecord,
   type AppointmentRecord,
   type ClinicalNoteRecord,
@@ -99,12 +103,16 @@ function DoctorDashboardPage() {
     navigate({ to: "/doctor-login" });
   };
 
-  // Main Data States
-  const [patients, setPatients] = useState<PatientRecord[]>([]);
-  const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
-  const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>([]);
-  const [reports, setReports] = useState<DetailedMedicalReport[]>([]);
-  const [loadingData, setLoadingData] = useState<boolean>(true);
+  // Main Data States (Initialized immediately with stored data for 0ms instant UI rendering)
+  const [patients, setPatients] = useState<PatientRecord[]>(() => getStoredPatients());
+  const [appointments, setAppointments] = useState<AppointmentRecord[]>(() =>
+    getStoredAppointments(),
+  );
+  const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>(() =>
+    getStoredTreatmentRecords(),
+  );
+  const [reports, setReports] = useState<DetailedMedicalReport[]>(() => getStoredMedicalReports());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<
@@ -185,31 +193,57 @@ function DoctorDashboardPage() {
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Load Main Dashboard Data on Mount
+  // Helper for background Supabase fetching with 5s timeout protection
+  const fetchWithTimeout = <T,>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    fallback: T,
+  ): Promise<T> => {
+    let timer: NodeJS.Timeout;
+    const timeoutPromise = new Promise<T>((resolve) => {
+      timer = setTimeout(() => {
+        resolve(fallback);
+      }, timeoutMs);
+    });
+
+    return Promise.race([promise, timeoutPromise])
+      .then((res) => {
+        clearTimeout(timer);
+        return res;
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        console.error("Supabase fetch notice:", err);
+        return fallback;
+      });
+  };
+
+  // Asynchronous Background Sync (UI renders instantly with stored fallback data)
   const loadData = async () => {
-    setLoadingData(true);
+    setIsSyncing(true);
     try {
       const [pData, aData, tData, rData] = await Promise.all([
-        fetchPatientsFromSupabase(),
-        fetchTodaysAppointmentsFromSupabase(),
-        fetchTreatmentRecordsFromSupabase(),
-        fetchMedicalReportsFromSupabase(),
+        fetchWithTimeout(fetchPatientsFromSupabase(), 5000, getStoredPatients()),
+        fetchWithTimeout(fetchTodaysAppointmentsFromSupabase(), 5000, getStoredAppointments()),
+        fetchWithTimeout(fetchTreatmentRecordsFromSupabase(), 5000, getStoredTreatmentRecords()),
+        fetchWithTimeout(fetchMedicalReportsFromSupabase(), 5000, getStoredMedicalReports()),
       ]);
 
-      setPatients(pData);
-      setAppointments(aData);
-      setTreatments(tData);
-      setReports(rData);
+      if (pData && pData.length > 0) setPatients(pData);
+      if (aData && aData.length > 0) setAppointments(aData);
+      if (tData && tData.length > 0) setTreatments(tData);
+      if (rData && rData.length > 0) setReports(rData);
     } catch (err) {
-      console.error("Error loading dashboard data:", err);
+      console.error("Error in background dashboard sync:", err);
     } finally {
-      setLoadingData(false);
+      setIsSyncing(false);
     }
   };
 
   useEffect(() => {
     loadData();
     window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showToast = (msg: string) => {
@@ -853,6 +887,13 @@ function DoctorDashboardPage() {
 
             {/* RIGHT HEADER USER & ACTION CONTROLS */}
             <div className="flex items-center gap-3 shrink-0">
+              {isSyncing && (
+                <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-blue-200/80 bg-blue-50/90 px-3 py-1 text-[10.5px] font-bold text-brand shadow-2xs">
+                  <Loader2 className="h-3 w-3 animate-spin text-brand" />
+                  <span>Syncing database...</span>
+                </div>
+              )}
+
               <button
                 className="relative grid h-9.5 w-9.5 place-items-center rounded-full border border-slate-200/80 bg-white text-slate-700 shadow-2xs hover:bg-slate-50"
                 aria-label="Notifications"
@@ -949,19 +990,10 @@ function DoctorDashboardPage() {
           </div>
         )}
 
-        {/* DYNAMIC MAIN CONTENT VIEW */}
+        {/* DYNAMIC MAIN CONTENT VIEW - RENDERS IMMEDIATELY WITHOUT BLOCKING */}
         <main className="flex-1 p-5 sm:p-7 lg:p-8 space-y-7 max-w-[1400px] mx-auto w-full">
-          {loadingData && (
-            <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#315FEA]" />
-              <p className="text-xs font-semibold text-slate-500">
-                Loading clinical database records...
-              </p>
-            </div>
-          )}
-
           {/* TAB 1: DASHBOARD OVERVIEW */}
-          {!loadingData && activeTab === "dashboard" && (
+          {activeTab === "dashboard" && (
             <>
               {/* 1. DASHBOARD HERO BANNER WITH ORIGINAL LOGIN DOCTOR CUTOUT */}
               <div className="relative rounded-[30px] border border-blue-100/90 bg-gradient-to-r from-white/90 via-blue-50/70 to-indigo-50/80 backdrop-blur-2xl shadow-[0_20px_50px_rgba(49,88,232,0.07)] overflow-hidden min-h-[330px] sm:min-h-[360px] lg:min-h-[385px] flex items-center justify-between">
