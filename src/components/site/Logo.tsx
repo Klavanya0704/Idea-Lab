@@ -11,9 +11,9 @@ export function ToothIcon({ className = "h-6 w-6" }: { className?: string }) {
   );
 }
 
-export function Logo() {
-  return (
-    <a href="#home" className="flex min-w-0 items-center gap-3">
+export function Logo({ href = "#home", className = "" }: { href?: string; className?: string }) {
+  const content = (
+    <>
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-brand text-white shadow-soft">
         <ToothIcon className="h-6 w-6" />
       </span>
@@ -25,6 +25,16 @@ export function Logo() {
           DENTAL HOSPITAL
         </span>
       </span>
+    </>
+  );
+
+  if (!href) {
+    return <div className={`flex min-w-0 items-center gap-3 ${className}`}>{content}</div>;
+  }
+
+  return (
+    <a href={href} className={`flex min-w-0 items-center gap-3 ${className}`}>
+      {content}
     </a>
   );
 }

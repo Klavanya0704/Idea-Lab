@@ -219,14 +219,26 @@ export async function registerAppointmentInSupabase(formData: {
  */
 export async function fetchTodaysAppointmentsFromSupabase(): Promise<AppointmentRecord[]> {
   try {
-    const todayStr = "2026-09-02";
-    const { data, error } = await supabase
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: todayData, error } = await supabase
       .from("appointments")
       .select("*, patients(*)")
       .eq("appointment_date", todayStr)
       .order("appointment_time", { ascending: true });
 
+    let data = todayData;
+
     if (error || !data || data.length === 0) {
+      const allRes = await supabase
+        .from("appointments")
+        .select("*, patients(*)")
+        .order("created_at", { ascending: false });
+      if (!allRes.error && allRes.data && allRes.data.length > 0) {
+        data = allRes.data;
+      }
+    }
+
+    if (!data || data.length === 0) {
       return getStoredAppointments();
     }
 
