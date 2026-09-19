@@ -672,16 +672,16 @@ function DoctorDashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-[#F4F7FE] font-sans antialiased text-slate-800 relative overflow-x-hidden">
-      {/* 1. FULL PAGE DENTAL HOSPITAL BACKGROUND WITH FROSTED GLASS OVERLAY */}
+      {/* 1. FULL PAGE DENTAL HOSPITAL BACKGROUND WITH SUBTLE ATMOSPHERIC OVERLAY */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Soft Blurred Dental Clinic Interior Photo */}
+        {/* Crisp Low-Blur Dental Clinic Interior Photo */}
         <img
           src={clinicBg}
           alt="Dental Hospital Environment"
-          className="w-full h-full object-cover object-center filter blur-[12px] opacity-20 scale-105"
+          className="w-full h-full object-cover object-center filter blur-[1.5px] opacity-45 scale-102"
         />
-        {/* Translucent Soft Frosted Glass Overlay (mostly white + pale blue + lavender hint) */}
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(245,249,255,0.78)_0%,rgba(238,244,255,0.75)_50%,rgba(248,245,255,0.78)_100%)] backdrop-blur-[14px]" />
+        {/* Soft White/Blue Atmospheric Haze Gradient Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.30)_0%,rgba(248,252,255,0.58)_42%,rgba(242,249,255,0.42)_100%)] backdrop-blur-[2px]" />
 
         {/* Ambient Subtle Lighting Glows */}
         <div className="absolute -top-32 -left-32 h-[600px] w-[600px] rounded-full bg-blue-400/12 blur-3xl" />
@@ -996,17 +996,17 @@ function DoctorDashboardPage() {
           {activeTab === "dashboard" && (
             <>
               {/* 1. DASHBOARD HERO BANNER WITH ORIGINAL LOGIN DOCTOR CUTOUT */}
-              <div className="relative rounded-[30px] border border-blue-100/90 bg-gradient-to-r from-white/90 via-blue-50/70 to-indigo-50/80 backdrop-blur-2xl shadow-[0_20px_50px_rgba(49,88,232,0.07)] overflow-hidden min-h-[330px] sm:min-h-[360px] lg:min-h-[385px] flex items-center justify-between">
-                {/* Background Clinic Blur with soft white/blue glass overlay */}
+              <div className="relative rounded-[30px] border border-white/80 bg-white/65 backdrop-blur-md shadow-[0_15px_40px_rgba(49,88,232,0.07)] overflow-hidden min-h-[330px] sm:min-h-[360px] lg:min-h-[385px] flex items-center justify-between">
+                {/* Background Clinic Photo with soft white/blue glass overlay */}
                 <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                   <img
                     src={clinicBg}
                     alt="Dental Clinic Interior"
-                    className="w-full h-full object-cover filter blur-[4px] opacity-30 scale-105"
+                    className="w-full h-full object-cover filter blur-[1px] opacity-40 scale-102"
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.92)_0%,rgba(240,246,255,0.85)_50%,rgba(245,238,255,0.88)_100%)]" />
-                  <div className="absolute -top-24 -left-24 h-[350px] w-[350px] rounded-full bg-blue-300/20 blur-3xl" />
-                  <div className="absolute -bottom-24 top-1/2 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-300/20 blur-3xl" />
+                  <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.82)_0%,rgba(240,246,255,0.65)_50%,rgba(245,238,255,0.72)_100%)]" />
+                  <div className="absolute -top-24 -left-24 h-[350px] w-[350px] rounded-full bg-blue-300/15 blur-3xl" />
+                  <div className="absolute -bottom-24 top-1/2 right-1/4 h-[300px] w-[300px] rounded-full bg-purple-300/15 blur-3xl" />
                 </div>
 
                 {/* Left Content Area */}
@@ -1038,62 +1038,11 @@ function DoctorDashboardPage() {
                   <img
                     src={doctorCutout}
                     alt="Dr. Anaya Sharma"
-                    className="absolute bottom-0 right-28 sm:right-36 lg:right-40 h-[310px] sm:h-[345px] lg:h-[370px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.20)]"
+                    className="absolute bottom-0 right-12 sm:right-20 lg:right-24 h-[320px] sm:h-[355px] lg:h-[380px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.18)]"
                   />
                 </div>
 
-                {/* Floating Glass Pills around Doctor - Reference Screenshot Exact Layout */}
-                {/* 1. Patient Care floating badge */}
-                <div className="absolute top-16 right-[380px] sm:right-[430px] lg:right-[460px] z-20 hidden xl:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
-                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-blue-500/10 text-brand">
-                    <Users className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
-                      Patient Care
-                    </p>
-                    <p className="text-[9.5px] font-medium text-slate-500">
-                      Manage patient history
-                    </p>
-                  </div>
-                </div>
-
-                {/* 2. Clinical Care floating badge */}
-                <div className="absolute bottom-20 right-[350px] sm:right-[400px] lg:right-[430px] z-20 hidden xl:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
-                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-blue-500/10 text-brand">
-                    <ToothIcon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
-                      Clinical Care
-                    </p>
-                    <p className="text-[9.5px] font-medium text-slate-500">
-                      Better dental treatment
-                    </p>
-                  </div>
-                </div>
-
-                {/* 3. Today's Schedule floating badge */}
-                <div className="absolute bottom-16 right-5 sm:right-8 z-20 hidden lg:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
-                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-purple-500/15 text-brand-purple">
-                    <Calendar className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
-                      Today's Schedule
-                    </p>
-                    <p className="text-[9.5px] font-semibold text-brand">5 appointments</p>
-                  </div>
-                </div>
-
-                {/* 4. Bottom-Right Cursive Quote */}
-                <div className="absolute bottom-3 right-6 z-20 hidden xl:block">
-                  <p className="font-signature text-sm sm:text-base text-brand font-normal drop-shadow-2xs">
-                    A Healthier Tomorrow, One Smile at a Time. ♡
-                  </p>
-                </div>
-
-                {/* Floating Date Card Top Right - Positioned clear of doctor's head */}
+                {/* Floating Date Card Top Right - Exact Reference Image Layout */}
                 <div className="absolute top-5 right-5 sm:right-6 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/95 bg-white/95 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_25px_rgba(49,88,232,0.08)]">
                   <div className="grid h-9.5 w-9.5 place-items-center rounded-xl bg-brand/10 text-brand">
                     <Calendar className="h-4.5 w-4.5" />
