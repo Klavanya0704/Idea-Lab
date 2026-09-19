@@ -651,25 +651,25 @@ function DoctorDashboardPage() {
         </div>
       )}
 
-      {/* 2. PREMIUM FLOATING GLASS SIDEBAR */}
-      <aside className="hidden lg:flex w-68 flex-col border-r border-blue-100/80 bg-white/80 backdrop-blur-2xl shadow-[8px_0_35px_rgba(49,88,232,0.04)] p-6 justify-between shrink-0 sticky top-0 h-screen z-20 rounded-r-[28px]">
+      {/* 2. PREMIUM FIXED 100VH GLASS SIDEBAR */}
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-64 h-screen flex-col justify-between border-r border-blue-100/90 bg-white/95 backdrop-blur-2xl p-5 shadow-[6px_0_30px_rgba(49,88,232,0.04)] overflow-y-auto rounded-r-[26px]">
         <div>
           <Link to="/" className="flex items-center gap-2 px-1 transition-opacity hover:opacity-90">
             <Logo href="" />
           </Link>
 
-          <div className="mt-4 rounded-full border border-blue-200/60 bg-blue-50/70 px-3.5 py-1.5 text-center shadow-2xs">
-            <span className="text-[10px] font-extrabold tracking-widest text-[#315FEA] uppercase">
+          <div className="mt-3.5 rounded-full border border-blue-200/60 bg-blue-50/80 px-3 py-1.5 text-center shadow-2xs">
+            <span className="text-[10px] font-extrabold tracking-widest text-brand uppercase">
               DOCTOR CLINICAL PORTAL
             </span>
           </div>
 
-          <nav className="mt-6 space-y-2">
+          <nav className="mt-5 space-y-1.5">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "dashboard"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -678,9 +678,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("patients")}
-              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "patients"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -688,8 +688,8 @@ function DoctorDashboardPage() {
                 <Users className="h-4 w-4" /> Patient Registry
               </span>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                  activeTab === "patients" ? "bg-white/20 text-white" : "bg-blue-100 text-[#315FEA]"
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  activeTab === "patients" ? "bg-white/20 text-white" : "bg-blue-100 text-brand"
                 }`}
               >
                 {stats.totalPatients}
@@ -698,9 +698,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("appointments")}
-              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "appointments"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -708,7 +708,7 @@ function DoctorDashboardPage() {
                 <Calendar className="h-4 w-4" /> Today's Schedule
               </span>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   activeTab === "appointments"
                     ? "bg-white/20 text-white"
                     : "bg-amber-100 text-amber-700"
@@ -720,9 +720,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("records")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "records"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -731,9 +731,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("reports")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "reports"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -742,9 +742,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("settings")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-extrabold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-extrabold transition-all ${
                 activeTab === "settings"
-                  ? "bg-gradient-to-r from-[#315FEA] via-[#6638E8] to-[#C83BE8] text-white shadow-[0_10px_25px_-5px_rgba(49,95,234,0.4)]"
+                  ? "bg-gradient-to-r from-[#315FEA] to-[#6638E8] text-white shadow-[0_8px_20px_-4px_rgba(49,95,234,0.4)]"
                   : "text-slate-600 hover:bg-blue-50/80 hover:text-slate-900"
               }`}
             >
@@ -752,59 +752,62 @@ function DoctorDashboardPage() {
             </button>
           </nav>
 
-          {/* 3. SIDEBAR DECORATIVE DENTAL CLINIC SECTION */}
-          <div className="my-3 pt-2 space-y-2">
-            <p className="font-signature text-2xl text-[#315FEA] leading-tight font-normal text-center -rotate-2">
+          {/* 3. SIDEBAR DECORATIVE PROMOTIONAL SECTION */}
+          <div className="my-4 pt-2 space-y-2">
+            <p className="font-signature text-2xl text-brand leading-tight font-normal text-center -rotate-2">
               Healthy Smiles
               <br />
               Happier Lives ♡
             </p>
-            <div className="relative rounded-2xl overflow-hidden border border-blue-100 shadow-md h-24 group">
+            <div className="relative rounded-2xl overflow-hidden border border-blue-100 shadow-xs h-20 group">
               <img
                 src={clinicBg}
                 alt="SmileCare Dental Clinic Interior"
-                className="w-full h-full object-cover filter blur-[1px] opacity-80 transition-transform duration-500 group-hover:scale-105"
+                className="w-full h-full object-cover filter blur-[0.5px] opacity-75 transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 via-transparent to-transparent" />
-              <div className="absolute bottom-2 left-3 right-3 text-center">
-                <span className="text-[9.5px] font-extrabold text-white tracking-widest uppercase drop-shadow-xs">
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 via-transparent to-transparent" />
+              <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-white">
+                <span className="text-[9px] font-extrabold tracking-wider uppercase drop-shadow-xs">
                   SMILECARE FACILITIES
+                </span>
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-white/20 text-white backdrop-blur-xs text-[10px]">
+                  →
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 4. DOCTOR PROFILE CARD AT BOTTOM OF SIDEBAR */}
-        <div className="rounded-2xl border border-blue-100/90 bg-white/90 backdrop-blur-md p-3.5 shadow-sm space-y-2.5">
-          <div className="flex items-center gap-3">
+        {/* 4. DOCTOR PROFILE CARD AT BOTTOM OF FIXED SIDEBAR */}
+        <div className="rounded-2xl border border-blue-100/90 bg-white p-3 shadow-xs space-y-2">
+          <div className="flex items-center gap-2.5">
             <img
               src={doctorCutout}
               alt="Dr. Anaya Sharma"
-              className="h-10 w-10 rounded-full object-cover object-top border-2 border-[#315FEA]/50 bg-blue-50 shadow-2xs"
+              className="h-9 w-9 rounded-full object-cover object-top border-2 border-brand/40 bg-blue-50 shadow-2xs shrink-0"
             />
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-extrabold text-slate-900 truncate">Dr. Anaya Sharma</p>
-              <p className="text-[10px] font-semibold text-slate-500 truncate">
+              <p className="text-[9.5px] font-semibold text-slate-500 truncate">
                 Chief Dental Surgeon
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-700">Online</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9.5px] font-bold text-emerald-700">Online</span>
               </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-1.5 text-[11px] font-extrabold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 py-1.5 text-[11px] font-extrabold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+      {/* MAIN CONTAINER OFFSET FOR FIXED SIDEBAR */}
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 lg:pl-64">
         {/* 5. FLOATING TOP HEADER */}
         <header className="sticky top-0 z-30 border-b border-blue-100/70 bg-white/80 backdrop-blur-xl px-5 py-3 lg:px-8 shadow-xs">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
@@ -987,28 +990,67 @@ function DoctorDashboardPage() {
                 </div>
 
                 {/* Center / Right: Exact Original Doctor Cutout from Doctor Login Page */}
-                <div className="relative h-[330px] sm:h-[360px] lg:h-[385px] w-full max-w-[440px] hidden md:flex items-end justify-center self-end z-10 shrink-0">
+                <div className="relative h-[330px] sm:h-[360px] lg:h-[385px] w-full max-w-[460px] hidden md:flex items-end justify-center self-end z-10 shrink-0">
                   <img
                     src={doctorCutout}
                     alt="Dr. Anaya Sharma"
-                    className="absolute bottom-0 right-6 sm:right-10 lg:right-16 h-[310px] sm:h-[345px] lg:h-[370px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.22)]"
+                    className="absolute bottom-0 right-28 sm:right-36 lg:right-40 h-[310px] sm:h-[345px] lg:h-[370px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.20)]"
                   />
                 </div>
 
-                {/* Floating Quote Card - Positioned nicely to not obstruct doctor */}
-                <div className="absolute bottom-5 left-6 sm:left-10 lg:left-[420px] z-20 hidden xl:flex items-center gap-3 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-4 py-2.5 text-slate-900 shadow-[0_10px_25px_rgba(49,88,232,0.08)] max-w-[220px]">
-                  <span className="grid h-8.5 w-8.5 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-xs">
-                    <ToothIcon className="h-4.5 w-4.5" />
+                {/* Floating Glass Pills around Doctor - Reference Screenshot Exact Layout */}
+                {/* 1. Patient Care floating badge */}
+                <div className="absolute top-16 right-[380px] sm:right-[430px] lg:right-[460px] z-20 hidden xl:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
+                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-blue-500/10 text-brand">
+                    <Users className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-[10.5px] font-bold leading-snug text-slate-900">
-                      “A Healthier Tomorrow, One Smile at a Time.”
+                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
+                      Patient Care
+                    </p>
+                    <p className="text-[9.5px] font-medium text-slate-500">
+                      Manage patient history
                     </p>
                   </div>
                 </div>
 
-                {/* Floating Date Card Top Right */}
-                <div className="absolute top-5 right-5 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_25px_rgba(49,88,232,0.08)]">
+                {/* 2. Clinical Care floating badge */}
+                <div className="absolute bottom-20 right-[350px] sm:right-[400px] lg:right-[430px] z-20 hidden xl:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
+                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-blue-500/10 text-brand">
+                    <ToothIcon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
+                      Clinical Care
+                    </p>
+                    <p className="text-[9.5px] font-medium text-slate-500">
+                      Better dental treatment
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. Today's Schedule floating badge */}
+                <div className="absolute bottom-16 right-5 sm:right-8 z-20 hidden lg:flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/90 backdrop-blur-xl px-3.5 py-2 shadow-[0_8px_20px_rgba(49,88,232,0.08)]">
+                  <span className="grid h-7.5 w-7.5 place-items-center rounded-xl bg-purple-500/15 text-brand-purple">
+                    <Calendar className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-extrabold text-slate-900 leading-tight">
+                      Today's Schedule
+                    </p>
+                    <p className="text-[9.5px] font-semibold text-brand">5 appointments</p>
+                  </div>
+                </div>
+
+                {/* 4. Bottom-Right Cursive Quote */}
+                <div className="absolute bottom-3 right-6 z-20 hidden xl:block">
+                  <p className="font-signature text-sm sm:text-base text-brand font-normal drop-shadow-2xs">
+                    A Healthier Tomorrow, One Smile at a Time. ♡
+                  </p>
+                </div>
+
+                {/* Floating Date Card Top Right - Positioned clear of doctor's head */}
+                <div className="absolute top-5 right-5 sm:right-6 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/95 bg-white/95 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_25px_rgba(49,88,232,0.08)]">
                   <div className="grid h-9.5 w-9.5 place-items-center rounded-xl bg-brand/10 text-brand">
                     <Calendar className="h-4.5 w-4.5" />
                   </div>
