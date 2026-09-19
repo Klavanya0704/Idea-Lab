@@ -39,8 +39,13 @@ import {
   Download,
   ExternalLink,
   FileUp,
+  Bell,
+  ChevronDown,
+  MoreVertical,
 } from "lucide-react";
-import { Logo } from "@/components/site/Logo";
+import clinicBg from "@/assets/clinic-background.jpg";
+import doctorCutout from "@/assets/doctor-cutout.png";
+import { Logo, ToothIcon } from "@/components/site/Logo";
 import {
   fetchPatientsFromSupabase,
   fetchTodaysAppointmentsFromSupabase,
@@ -647,24 +652,24 @@ function DoctorDashboardPage() {
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-xl shadow-[5px_0_30px_rgba(0,0,0,0.02)] p-6 justify-between shrink-0 sticky top-0 h-screen z-20">
+      <aside className="hidden lg:flex w-68 flex-col border-r border-blue-100/70 bg-white/80 backdrop-blur-xl shadow-[5px_0_30px_rgba(49,88,232,0.03)] p-6 justify-between shrink-0 sticky top-0 h-screen z-20">
         <div>
-          <Link to="/" className="flex items-center gap-2 px-2 transition-opacity hover:opacity-90">
+          <Link to="/" className="flex items-center gap-2 px-1 transition-opacity hover:opacity-90">
             <Logo href="" />
           </Link>
 
-          <div className="mt-4 rounded-full border border-brand/30 bg-brand/5 px-3.5 py-1.5 text-center shadow-2xs">
-            <span className="text-[11px] font-bold tracking-widest text-brand uppercase">
+          <div className="mt-4 rounded-full border border-blue-200/60 bg-blue-50/70 px-3.5 py-1.5 text-center shadow-2xs">
+            <span className="text-[10px] font-extrabold tracking-widest text-brand-purple uppercase">
               DOCTOR CLINICAL PORTAL
             </span>
           </div>
 
-          <nav className="mt-8 space-y-1.5">
+          <nav className="mt-6 space-y-1.5">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "dashboard"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
@@ -673,9 +678,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("patients")}
-              className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "patients"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
@@ -684,9 +689,7 @@ function DoctorDashboardPage() {
               </span>
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                  activeTab === "patients"
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-200/80 text-slate-700"
+                  activeTab === "patients" ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
                 }`}
               >
                 {stats.totalPatients}
@@ -695,9 +698,9 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("appointments")}
-              className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "appointments"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
@@ -708,7 +711,7 @@ function DoctorDashboardPage() {
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   activeTab === "appointments"
                     ? "bg-white/20 text-white"
-                    : "bg-amber-500/20 text-amber-700"
+                    : "bg-amber-100 text-amber-700"
                 }`}
               >
                 {stats.todaysAptsCount}
@@ -717,20 +720,20 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("records")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "records"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
-              <FolderHeart className="h-4 w-4" /> Treatment Records
+              <ToothIcon className="h-4 w-4" /> Treatment Records
             </button>
 
             <button
               onClick={() => setActiveTab("reports")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "reports"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
@@ -739,30 +742,56 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("settings")}
-              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
                 activeTab === "settings"
-                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
                   : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <Settings className="h-4 w-4" /> Clinic Settings
             </button>
           </nav>
+
+          {/* MIDDLE SIDEBAR DECORATION & CLINIC PREVIEW */}
+          <div className="my-4 pt-2 space-y-2">
+            <p className="font-signature text-2xl text-brand leading-tight font-normal text-center -rotate-2">
+              Healthy Smiles
+              <br />
+              Happier Lives ♡
+            </p>
+            <div className="relative rounded-2xl overflow-hidden border border-blue-100 shadow-xs h-24">
+              <img
+                src={clinicBg}
+                alt="Clinic Interior Preview"
+                className="w-full h-full object-cover filter blur-[1px] opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent" />
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-3.5 shadow-xs">
+        {/* BOTTOM DOCTOR PROFILE CARD */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-md p-3.5 shadow-xs space-y-2.5">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[linear-gradient(135deg,#3155D9_0%,#6B35D9_100%)] text-white text-xs font-bold shadow-xs">
-              AS
-            </span>
+            <img
+              src={doctorCutout}
+              alt="Dr. Anaya Sharma"
+              className="h-10 w-10 rounded-full object-cover object-top border-2 border-brand/40 bg-blue-50"
+            />
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-bold text-slate-900 truncate">Dr. Anaya Sharma</p>
-              <p className="text-[11px] text-slate-500 truncate">Chief Dental Surgeon</p>
+              <p className="text-[10px] font-medium text-slate-500 truncate">
+                Chief Dental Surgeon
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-700">Online</span>
+              </div>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-1.5 text-[11px] font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
           </button>
@@ -772,8 +801,8 @@ function DoctorDashboardPage() {
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header Bar */}
-        <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-md px-5 py-3.5 lg:px-8">
-          <div className="mx-auto flex max-w-[1360px] items-center justify-between">
+        <header className="sticky top-0 z-30 border-b border-blue-100/60 bg-white/80 backdrop-blur-md px-5 py-3 lg:px-8">
+          <div className="mx-auto flex max-w-[1380px] items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -790,17 +819,51 @@ function DoctorDashboardPage() {
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-50/80 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold text-emerald-700 shadow-2xs">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Dr. Anaya
-                Sharma (Online)
-              </span>
+            {/* SEARCH BAR */}
+            <div className="hidden md:flex flex-1 max-w-md items-center relative">
+              <Search className="absolute left-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search patients, appointments, records..."
+                className="w-full rounded-full border border-blue-100/90 bg-slate-50/80 py-2 pl-10 pr-4 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 shadow-2xs"
+              />
+            </div>
+
+            {/* RIGHT HEADER USER & ACTION CONTROLS */}
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                className="relative grid h-9 w-9 place-items-center rounded-full border border-slate-200/80 bg-white text-slate-700 shadow-2xs hover:bg-slate-50"
+                aria-label="Notifications"
+              >
+                <Bell className="h-4 w-4 text-slate-600" />
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-2xs">
+                  3
+                </span>
+              </button>
+
+              <div className="hidden sm:flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 shadow-2xs">
+                <img
+                  src={doctorCutout}
+                  alt="Dr. Anaya Sharma"
+                  className="h-7 w-7 rounded-full object-cover object-top border border-brand/40 bg-blue-50"
+                />
+                <div className="text-left leading-tight">
+                  <p className="text-xs font-bold text-slate-900">Dr. Anaya Sharma</p>
+                  <p className="text-[9.5px] font-semibold text-emerald-600 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />{" "}
+                    Online
+                  </p>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              </div>
 
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/80 backdrop-blur-sm px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white hover:text-brand transition-all shadow-xs"
+                className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1.5 text-xs font-bold text-brand hover:bg-brand hover:text-white transition-all shadow-xs"
               >
-                <ArrowLeft className="h-3.5 w-3.5" /> Website
+                <ExternalLink className="h-3.5 w-3.5" /> Visit Website
               </Link>
             </div>
           </div>
@@ -843,7 +906,7 @@ function DoctorDashboardPage() {
               }}
               className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
-              <FolderHeart className="h-4 w-4" /> Treatment Records
+              <ToothIcon className="h-4 w-4" /> Treatment Records
             </button>
             <button
               onClick={() => {
@@ -867,7 +930,7 @@ function DoctorDashboardPage() {
         )}
 
         {/* DYNAMIC MAIN CONTENT VIEW */}
-        <main className="flex-1 p-5 sm:p-7 lg:p-8 space-y-6 max-w-[1360px] mx-auto w-full">
+        <main className="flex-1 p-5 sm:p-7 lg:p-8 space-y-6 max-w-[1380px] mx-auto w-full">
           {loadingData && (
             <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-brand" />
@@ -880,148 +943,285 @@ function DoctorDashboardPage() {
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {!loadingData && activeTab === "dashboard" && (
             <>
-              {/* 1. DASHBOARD WELCOME SECTION */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-[22px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 shadow-[0_10px_30px_rgba(45,55,120,0.05)]">
-                <div>
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-purple uppercase">
-                    S M I L E C A R E &nbsp; C L I N I C A L &nbsp; D A S H B O A R D
-                  </span>
-                  <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                    Good Morning, Dr. Anaya 👋
-                  </h1>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                    Here's your clinical workspace summary and patient schedules for today.
-                  </p>
+              {/* 1. DASHBOARD HERO BANNER WITH ORIGINAL DOCTOR CUTOUT */}
+              <div className="relative rounded-[28px] border border-blue-100/90 bg-gradient-to-r from-blue-600/10 via-indigo-500/10 to-purple-500/10 backdrop-blur-xl shadow-xl overflow-hidden min-h-[260px] sm:min-h-[290px] flex items-center justify-between">
+                {/* Background Clinic Blur */}
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <img
+                    src={clinicBg}
+                    alt="Dental Clinic Interior"
+                    className="w-full h-full object-cover filter blur-[3px] opacity-35 scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white via-white/85 to-blue-50/70" />
                 </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 shrink-0">
-                  <Calendar className="h-5 w-5 text-brand" />
+
+                {/* Left Content */}
+                <div className="relative z-10 py-6 sm:py-8 pl-6 sm:pl-9 max-w-[540px]">
+                  <span className="text-[11px] font-extrabold tracking-[0.2em] text-brand uppercase">
+                    G O O D &nbsp; D E N T I S T R Y &nbsp; B R I G H T E R &nbsp; F U T U R E S
+                  </span>
+                  <h1 className="mt-2 font-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                    Good Morning,
+                    <br />
+                    Dr. Anaya 👋
+                  </h1>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                    Here's your clinical workspace summary
+                    <br className="hidden sm:inline" />
+                    and patient schedules for today.
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <p className="font-signature text-xl sm:text-2xl text-brand font-normal -rotate-1 drop-shadow-xs">
+                      Empowering Dentists for Healthier Smiles ♡
+                    </p>
+                  </div>
+                </div>
+
+                {/* Center / Right: Exact Original Doctor Cutout from Doctor Login Page */}
+                <div className="relative h-full w-full max-w-[420px] hidden md:flex items-end justify-center self-end z-10">
+                  <img
+                    src={doctorCutout}
+                    alt="Dr. Anaya Sharma"
+                    className="absolute bottom-0 right-12 lg:right-24 h-[260px] sm:h-[300px] lg:h-[340px] w-auto object-contain object-bottom pointer-events-none drop-shadow-[0_20px_40px_rgba(49,88,232,0.3)]"
+                  />
+                </div>
+
+                {/* Floating Quote Card */}
+                <div className="absolute bottom-5 right-4 sm:right-10 z-20 hidden sm:flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/90 backdrop-blur-md px-3.5 py-2.5 text-slate-900 shadow-xl max-w-[210px]">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-xs">
+                    <ToothIcon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-[10.5px] font-bold leading-snug text-slate-900">
+                      “A Healthier Tomorrow, One Smile at a Time.”
+                    </p>
+                  </div>
+                </div>
+
+                {/* Floating Date Card Top Right */}
+                <div className="absolute top-5 right-5 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/80 bg-white/90 backdrop-blur-md px-4 py-3 shadow-md">
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand">
+                    <Calendar className="h-5 w-5" />
+                  </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900">02 September 2026</p>
-                    <p className="text-[10px] font-medium text-slate-500">
-                      Today's Clinical Overview
+                    <p className="text-[10px] font-semibold text-slate-500">
+                      Tuesday • Today's Clinical Overview
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* 2. ELEVATED STATISTICS CARDS */}
+              {/* 2. ELEVATED 6 STATISTICS CARDS WITH MINI BAR CHARTS */}
               <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 1. TOTAL PATIENTS */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Total Patients
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500/15 text-blue-600">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-500/15 text-blue-600">
                       <Users className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      TOTAL PATIENTS
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.totalPatients}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Registered in database</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      Registered in database
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                      ↑ +12%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-blue-200 rounded-xs h-1.5" />
+                      <div className="w-1 bg-blue-300 rounded-xs h-2.5" />
+                      <div className="w-1 bg-blue-400 rounded-xs h-2" />
+                      <div className="w-1 bg-blue-600 rounded-xs h-3.5" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 2. TODAY'S SCHEDULE */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Today's Schedule
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-500/15 text-indigo-600">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-purple-500/15 text-purple-600">
                       <Calendar className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      TODAY'S SCHEDULE
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.todaysAptsCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Appointments today</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      Appointments today
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                      ↑ +8%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-purple-200 rounded-xs h-2" />
+                      <div className="w-1 bg-purple-300 rounded-xs h-1.5" />
+                      <div className="w-1 bg-purple-400 rounded-xs h-3" />
+                      <div className="w-1 bg-purple-600 rounded-xs h-3.5" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 3. WAITING */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
-                      Waiting
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/15 text-amber-700">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-amber-500/15 text-amber-700">
                       <Clock className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
+                      WAITING
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-amber-700">
                       {stats.waitingCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">In reception waiting room</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      In reception waiting room
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
+                      ↑ +0%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-amber-200 rounded-xs h-1.5" />
+                      <div className="w-1 bg-amber-300 rounded-xs h-2" />
+                      <div className="w-1 bg-amber-400 rounded-xs h-2.5" />
+                      <div className="w-1 bg-amber-500 rounded-xs h-2" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 4. IN CONSULTATION */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
-                      In Consultation
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-purple-500/15 text-purple-700">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-purple-500/15 text-purple-700">
                       <Stethoscope className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">
+                      IN CONSULTATION
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-purple-700">
                       {stats.inConsultationCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Active in surgery</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      Active in surgery
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-purple-600 flex items-center gap-0.5">
+                      ↑ +0%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-purple-200 rounded-xs h-2" />
+                      <div className="w-1 bg-purple-300 rounded-xs h-1.5" />
+                      <div className="w-1 bg-purple-500 rounded-xs h-3" />
+                      <div className="w-1 bg-purple-700 rounded-xs h-2" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 5. COMPLETED TODAY */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-                      Completed Today
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700">
                       <CheckCircle2 className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                      COMPLETED TODAY
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-emerald-700">
                       {stats.completedTodayCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Finished checkups</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      Finished checkups
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
+                      ↑ +0%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-emerald-200 rounded-xs h-1.5" />
+                      <div className="w-1 bg-emerald-300 rounded-xs h-2" />
+                      <div className="w-1 bg-emerald-400 rounded-xs h-3" />
+                      <div className="w-1 bg-emerald-600 rounded-xs h-2.5" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                {/* 6. FOLLOW-UPS */}
+                <div className="rounded-[22px] border border-blue-100/80 bg-white/85 backdrop-blur-xl p-4.5 shadow-[0_10px_25px_rgba(49,88,232,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-pink-700 uppercase tracking-wider">
-                      Follow-ups
-                    </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-pink-500/15 text-pink-700">
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-pink-500/15 text-pink-700">
                       <Activity className="h-4 w-4" />
                     </span>
+                    <span className="text-[10px] font-bold text-pink-700 uppercase tracking-wider">
+                      FOLLOW-UPS
+                    </span>
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.upcomingFollowupsCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">Scheduled upcoming</p>
+                    <p className="mt-0.5 text-[10.5px] font-medium text-slate-500">
+                      Scheduled upcoming
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-pink-600 flex items-center gap-0.5">
+                      ↑ +100%
+                    </span>
+                    <div className="flex items-end gap-0.5 h-3.5">
+                      <div className="w-1 bg-pink-200 rounded-xs h-1" />
+                      <div className="w-1 bg-pink-300 rounded-xs h-2" />
+                      <div className="w-1 bg-pink-400 rounded-xs h-2.5" />
+                      <div className="w-1 bg-pink-600 rounded-xs h-3.5" />
+                    </div>
                   </div>
                 </div>
               </section>
 
-              {/* 3. RECENTLY REGISTERED PATIENTS & TODAY'S UPCOMING APPOINTMENTS */}
+              {/* 3. RECENTLY REGISTERED PATIENTS & TODAY'S SCHEDULE SPLIT */}
               <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-                <div className="lg:col-span-7 rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
+                {/* LEFT: RECENTLY REGISTERED PATIENTS TABLE CARD */}
+                <div className="lg:col-span-7 rounded-[26px] border border-blue-100/90 bg-white/85 backdrop-blur-xl p-6 shadow-[0_12px_35px_rgba(49,88,232,0.05)]">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="font-display text-lg font-bold text-slate-900">
-                        Recently Registered Patients
-                      </h2>
-                      <p className="text-xs text-slate-500">Sorted by registration date</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-50 text-brand">
+                        <Users className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <h2 className="font-display text-lg font-extrabold text-slate-900">
+                          Recently Registered Patients
+                        </h2>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Sorted by registration date
+                        </p>
+                      </div>
                     </div>
                     <button
                       onClick={() => setActiveTab("patients")}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:underline"
                     >
                       View Registry <ChevronRight className="h-3.5 w-3.5" />
                     </button>
@@ -1031,10 +1231,10 @@ function DoctorDashboardPage() {
                     {recentlyRegistered.map((patient) => (
                       <div
                         key={patient.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 backdrop-blur-xs p-3.5 transition-all duration-200 hover:bg-white hover:shadow-md hover:-translate-y-0.5"
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/90 p-3.5 transition-all duration-200 hover:bg-white hover:shadow-md hover:-translate-y-0.5"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[linear-gradient(135deg,#3155D9_0%,#6B35D9_100%)] text-white text-xs font-bold shadow-xs">
+                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-xs font-extrabold shadow-xs">
                             {patient.name
                               .split(" ")
                               .map((n) => n[0])
@@ -1042,28 +1242,35 @@ function DoctorDashboardPage() {
                           </span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-slate-900">{patient.name}</p>
-                              <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700">
-                                {patient.id}
+                              <p className="text-xs font-extrabold text-slate-900">
+                                {patient.name}
+                              </p>
+                              <span className="rounded-md bg-blue-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-brand">
+                                #{patient.id}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-[11px] text-slate-500">
-                              Reg:{" "}
-                              <span className="font-medium text-slate-800">
-                                {formatDate(patient.registrationDate)}
-                              </span>{" "}
-                              • {patient.treatment}
+                            <p className="mt-0.5 text-[11px] text-slate-500 font-medium">
+                              {formatDate(patient.registrationDate)} •{" "}
+                              <span className="font-semibold text-slate-700">
+                                {patient.treatment}
+                              </span>
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10.5px] font-bold text-emerald-700">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[10.5px] font-bold ${
+                              patient.status === "Active"
+                                ? "bg-emerald-500/10 text-emerald-700"
+                                : "bg-purple-500/10 text-purple-700"
+                            }`}
+                          >
                             {patient.status}
                           </span>
                           <button
                             onClick={() => handleOpenPatientModal(patient)}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-brand hover:text-white hover:border-brand transition-colors shadow-xs"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-brand hover:text-white hover:border-brand transition-all shadow-2xs"
                           >
                             <Eye className="h-3.5 w-3.5" /> View Patient
                           </button>
@@ -1073,103 +1280,94 @@ function DoctorDashboardPage() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-5 rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
+                {/* RIGHT: TODAY'S SCHEDULE TIMELINE CARD */}
+                <div className="lg:col-span-5 rounded-[26px] border border-blue-100/90 bg-white/85 backdrop-blur-xl p-6 shadow-[0_12px_35px_rgba(49,88,232,0.05)]">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="font-display text-lg font-bold text-slate-900">
-                        Today's Schedule
-                      </h2>
-                      <p className="text-xs text-slate-500">{formatDate("2026-09-02")}</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-9 w-9 place-items-center rounded-xl bg-purple-50 text-brand-purple">
+                        <Calendar className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <h2 className="font-display text-lg font-extrabold text-slate-900">
+                          Today's Schedule
+                        </h2>
+                        <p className="text-xs text-slate-500 font-medium">02 September 2026</p>
+                      </div>
                     </div>
                     <button
                       onClick={() => setActiveTab("appointments")}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-brand hover:underline"
                     >
                       Full Schedule <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
-                  <div className="mt-5 space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                  <div className="mt-5 space-y-3.5 max-h-[390px] overflow-y-auto pr-1">
                     {todaysSchedule.map((apt) => (
                       <div
                         key={apt.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 backdrop-blur-xs p-3.5 transition-all duration-200 hover:bg-white hover:shadow-xs"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/90 p-3.5 transition-all duration-200 hover:bg-white hover:shadow-xs"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                            <Clock className="h-4 w-4 text-brand-purple" />
-                          </div>
+                          <span className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 px-2.5 py-1 text-[11px] font-bold text-slate-700">
+                            <Clock className="h-3.5 w-3.5 text-brand" />
+                            {apt.time}
+                          </span>
                           <div>
-                            <p className="text-xs font-bold text-slate-900">{apt.patientName}</p>
-                            <p className="text-[11px] text-slate-500">
-                              {apt.time} • {apt.treatment}
+                            <p className="text-xs font-extrabold text-slate-900">
+                              {apt.patientName}
+                            </p>
+                            <p className="text-[11px] text-slate-500 font-medium">
+                              {apt.treatment}
                             </p>
                           </div>
                         </div>
 
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                            apt.status === "Completed"
-                              ? "bg-emerald-500/10 text-emerald-700"
-                              : apt.status === "In Consultation"
-                                ? "bg-purple-500/10 text-purple-700"
-                                : apt.status === "Waiting"
-                                  ? "bg-amber-500/10 text-amber-700 animate-pulse"
-                                  : "bg-blue-500/10 text-blue-700"
-                          }`}
-                        >
-                          {apt.status}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                              apt.status === "Completed"
+                                ? "bg-emerald-500/10 text-emerald-700"
+                                : apt.status === "In Consultation"
+                                  ? "bg-purple-500/10 text-purple-700"
+                                  : apt.status === "Waiting"
+                                    ? "bg-amber-500/10 text-amber-700 animate-pulse"
+                                    : "bg-blue-500/10 text-blue-700"
+                            }`}
+                          >
+                            {apt.status}
+                          </span>
+                          <button
+                            onClick={() => handleUpdateAppointmentStatus(apt.id, "In Consultation")}
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                            title="Appointment Options"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </section>
 
-              {/* 4. TODAY'S CLINICAL INSIGHTS */}
-              <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 text-white shadow-sm">
-                    <Users className="h-5 w-5" />
+              {/* 4. FOOTER INFO BAR */}
+              <footer className="mt-6 rounded-[22px] border border-blue-100/80 bg-white/80 backdrop-blur-xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold text-slate-600">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-brand" /> Tadepalligudem
                   </span>
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Patient Flow
-                    </p>
-                    <p className="text-sm font-extrabold text-slate-900">
-                      {stats.todaysAptsCount} appointments today
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-purple-600 text-white shadow-sm">
-                    <Stethoscope className="h-5 w-5" />
+                  <span className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-brand" /> +91 98765 43210
                   </span>
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Clinical Progress
-                    </p>
-                    <p className="text-sm font-extrabold text-slate-900">
-                      {stats.inConsultationCount} consultation active
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                    <Activity className="h-5 w-5" />
+                  <span className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-brand" /> support@smilecare.com
                   </span>
-                  <div>
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Follow-up Care
-                    </p>
-                    <p className="text-sm font-extrabold text-slate-900">
-                      {stats.upcomingFollowupsCount} follow-ups scheduled
-                    </p>
-                  </div>
                 </div>
-              </section>
+                <div className="tracking-widest text-[11px] font-extrabold text-brand uppercase">
+                  CARE &nbsp;|&nbsp; COMPASSION &nbsp;|&nbsp; CONFIDENCE
+                </div>
+              </footer>
             </>
           )}
 
