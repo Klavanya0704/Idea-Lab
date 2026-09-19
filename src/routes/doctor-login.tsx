@@ -130,12 +130,26 @@ function DoctorLoginPage() {
       {/* 3. MAIN CONTENT CONTAINER: 61% Left Hero / 39% Right Login */}
       <main className="relative z-10 w-full max-w-[1420px] mx-auto px-4 sm:px-6 my-2 sm:my-4 flex-1 grid lg:grid-cols-[1.55fr_1fr] gap-5 items-stretch">
         {/* 4. LEFT HERO PANEL: Translucent Purple Glass Panel */}
-        <div className="relative rounded-[24px] sm:rounded-[28px] overflow-hidden border border-white/45 bg-[rgba(65,60,215,0.42)] backdrop-blur-[24px] backdrop-saturate-[140%] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_20px_50px_rgba(0,0,0,0.15)] p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between">
-          {/* Translucent purple/blue gradient overlay */}
-          <div className="absolute inset-0 z-0 pointer-events-none bg-[linear-gradient(135deg,rgba(75,70,220,0.48)_0%,rgba(115,55,220,0.42)_50%,rgba(215,60,205,0.46)_100%)]" />
-
-          {/* Top/Left subtle glass edge shine highlight */}
-          <div className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent z-10" />
+        <div
+          className="relative rounded-[24px] sm:rounded-[28px] overflow-hidden p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(110, 100, 255, 0.30), rgba(120, 80, 230, 0.20), rgba(220, 80, 220, 0.18))",
+            backdropFilter: "blur(28px) saturate(160%)",
+            WebkitBackdropFilter: "blur(28px) saturate(160%)",
+            border: "1px solid rgba(255, 255, 255, 0.45)",
+            boxShadow:
+              "0 20px 50px rgba(40, 40, 100, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(255, 255, 255, 0.12)",
+          }}
+        >
+          {/* Subtle Glass Reflection Highlight */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[inherit] z-10"
+            style={{
+              background:
+                "linear-gradient(120deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 25%, transparent 50%)",
+            }}
+          />
 
           {/* Ambient Glows inside hero */}
           <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl z-0" />
@@ -177,7 +191,15 @@ function DoctorLoginPage() {
           <div className="relative z-20 my-6 grid sm:grid-cols-2 gap-4 items-end flex-1">
             {/* 8. Light Translucent Feature Cards Stack */}
             <div className="space-y-3 max-w-[310px] z-20">
-              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
+              <div
+                className="group rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white transition-all hover:bg-white/20"
+                style={{
+                  background: "rgba(255, 255, 255, 0.12)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.30)",
+                }}
+              >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Users className="h-5 w-5" />
                 </div>
@@ -191,7 +213,15 @@ function DoctorLoginPage() {
                 </div>
               </div>
 
-              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
+              <div
+                className="group rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white transition-all hover:bg-white/20"
+                style={{
+                  background: "rgba(255, 255, 255, 0.12)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.30)",
+                }}
+              >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Calendar className="h-5 w-5" />
                 </div>
@@ -205,7 +235,15 @@ function DoctorLoginPage() {
                 </div>
               </div>
 
-              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
+              <div
+                className="group rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white transition-all hover:bg-white/20"
+                style={{
+                  background: "rgba(255, 255, 255, 0.12)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.30)",
+                }}
+              >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Activity className="h-5 w-5" />
                 </div>
@@ -253,7 +291,15 @@ function DoctorLoginPage() {
           </div>
 
           {/* 11. Bottom Hero Stats Bar */}
-          <div className="relative z-20 -mx-7 -mb-7 sm:-mx-10 sm:-mb-10 lg:-mx-12 lg:-mb-12 border-t border-white/20 bg-white/15 backdrop-blur-md px-6 py-4 flex items-center justify-around text-white text-xs">
+          <div
+            className="relative z-20 -mx-7 -mb-7 sm:-mx-10 sm:-mb-10 lg:-mx-12 lg:-mb-12 px-6 py-4 flex items-center justify-around text-white text-xs"
+            style={{
+              background: "rgba(255, 255, 255, 0.12)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.25)",
+            }}
+          >
             <div className="flex items-center gap-2.5">
               <Users className="h-4 w-4 text-white/90 shrink-0" />
               <div>
@@ -281,7 +327,26 @@ function DoctorLoginPage() {
         </div>
 
         {/* 12. RIGHT LOGIN PANEL: Translucent Frosted White Glass Panel */}
-        <div className="rounded-[24px] sm:rounded-[28px] bg-white/60 backdrop-blur-[26px] backdrop-saturate-[135%] border border-white/70 shadow-[inset_0_1px_2px_rgba(255,255,255,0.85),0_20px_50px_rgba(0,0,0,0.08)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
+        <div
+          className="relative rounded-[24px] sm:rounded-[28px] overflow-hidden p-7 sm:p-10 lg:p-12 flex flex-col justify-between"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255, 255, 255, 0.48), rgba(245, 250, 255, 0.30))",
+            backdropFilter: "blur(30px) saturate(150%)",
+            WebkitBackdropFilter: "blur(30px) saturate(150%)",
+            border: "1px solid rgba(255, 255, 255, 0.60)",
+            boxShadow:
+              "0 20px 50px rgba(30, 50, 100, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 0 rgba(255, 255, 255, 0.15)",
+          }}
+        >
+          {/* Subtle Glass Reflection Highlight */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[inherit] z-10"
+            style={{
+              background:
+                "linear-gradient(120deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.10) 25%, transparent 50%)",
+            }}
+          />
           <div className="max-w-[420px] mx-auto w-full flex-1 flex flex-col justify-center">
             {/* 13. Login Header */}
             <div>
@@ -336,7 +401,13 @@ function DoctorLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="doctor@smilecare.com"
-                    className="w-full rounded-2xl border border-white/70 bg-white/50 backdrop-blur-sm py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white/80 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
+                    className="w-full rounded-2xl py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:bg-white/50 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.25)",
+                      backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
+                      border: "1px solid rgba(255, 255, 255, 0.45)",
+                    }}
                   />
                 </div>
               </div>
@@ -360,7 +431,13 @@ function DoctorLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full rounded-2xl border border-white/70 bg-white/50 backdrop-blur-sm py-3.5 pl-11 pr-11 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white/80 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
+                    className="w-full rounded-2xl py-3.5 pl-11 pr-11 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:bg-white/50 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.25)",
+                      backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
+                      border: "1px solid rgba(255, 255, 255, 0.45)",
+                    }}
                   />
                   <button
                     type="button"
@@ -417,13 +494,29 @@ function DoctorLoginPage() {
 
             {/* 18. OR Divider */}
             <div className="relative my-5 text-center text-xs text-slate-400 before:content-[''] before:absolute before:left-0 before:top-1/2 before:w-full before:h-px before:bg-slate-200/80">
-              <span className="relative z-10 bg-white/70 backdrop-blur-xs px-3 py-0.5 rounded-full border border-white/60 font-medium text-slate-500 shadow-2xs">
+              <span
+                className="relative z-10 px-3 py-0.5 rounded-full font-medium text-slate-600 shadow-2xs"
+                style={{
+                  background: "rgba(255, 255, 255, 0.40)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255, 255, 255, 0.50)",
+                }}
+              >
                 OR
               </span>
             </div>
 
             {/* 19. Security Card */}
-            <div className="rounded-2xl bg-white/50 backdrop-blur-sm border border-white/70 p-3.5 flex items-center gap-3 shadow-xs">
+            <div
+              className="rounded-2xl p-3.5 flex items-center gap-3 shadow-xs"
+              style={{
+                background: "rgba(255, 255, 255, 0.22)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                border: "1px solid rgba(255, 255, 255, 0.45)",
+              }}
+            >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-xs">
                 <ShieldCheck className="h-4 w-4" />
               </span>
