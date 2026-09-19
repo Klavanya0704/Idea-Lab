@@ -107,7 +107,7 @@ const REPORTS_KEY = "smilecare_medical_reports";
 const TIMELINES_KEY = "smilecare_timelines";
 
 // SEED INITIAL DATA
-const INITIAL_PATIENTS: PatientRecord[] = [
+export const INITIAL_PATIENTS: PatientRecord[] = [
   {
     id: "P001",
     name: "Priya Sharma",
@@ -210,7 +210,7 @@ const INITIAL_PATIENTS: PatientRecord[] = [
   },
 ];
 
-const INITIAL_APPOINTMENTS: AppointmentRecord[] = [
+export const INITIAL_APPOINTMENTS: AppointmentRecord[] = [
   {
     id: "APT-101",
     patientId: "P001",
@@ -259,7 +259,7 @@ const INITIAL_APPOINTMENTS: AppointmentRecord[] = [
     date: "2026-09-02",
     time: "02:15 PM",
     treatment: "Root Canal",
-    reasonForVisit: "Follow-up check after root canal treatment.",
+    reasonForVisit: "Post-endodontic treatment evaluation.",
     status: "In Consultation",
     doctor: "Dr. Anaya Sharma",
   },
@@ -278,7 +278,7 @@ const INITIAL_APPOINTMENTS: AppointmentRecord[] = [
   },
 ];
 
-const INITIAL_TREATMENTS: TreatmentHistoryRecord[] = [
+export const INITIAL_TREATMENTS: TreatmentHistoryRecord[] = [
   {
     id: "TRT-201",
     patientId: "P001",
@@ -311,7 +311,7 @@ const INITIAL_TREATMENTS: TreatmentHistoryRecord[] = [
   },
 ];
 
-const INITIAL_REPORTS: MedicalReportRecord[] = [
+export const INITIAL_REPORTS: MedicalReportRecord[] = [
   {
     id: "REP-301",
     patientId: "P001",

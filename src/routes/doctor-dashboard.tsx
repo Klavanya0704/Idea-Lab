@@ -68,6 +68,10 @@ import {
   type DetailedMedicalReport,
 } from "@/lib/clinicalService";
 import {
+  INITIAL_PATIENTS,
+  INITIAL_APPOINTMENTS,
+  INITIAL_TREATMENTS,
+  INITIAL_REPORTS,
   getStoredPatients,
   getStoredAppointments,
   getStoredTreatmentRecords,
@@ -103,15 +107,11 @@ function DoctorDashboardPage() {
     navigate({ to: "/doctor-login" });
   };
 
-  // Main Data States (Initialized immediately with stored data for 0ms instant UI rendering)
-  const [patients, setPatients] = useState<PatientRecord[]>(() => getStoredPatients());
-  const [appointments, setAppointments] = useState<AppointmentRecord[]>(() =>
-    getStoredAppointments(),
-  );
-  const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>(() =>
-    getStoredTreatmentRecords(),
-  );
-  const [reports, setReports] = useState<DetailedMedicalReport[]>(() => getStoredMedicalReports());
+  // Main Data States (Initialized statically with seed constants to guarantee 100% SSR hydration safety)
+  const [patients, setPatients] = useState<PatientRecord[]>(INITIAL_PATIENTS);
+  const [appointments, setAppointments] = useState<AppointmentRecord[]>(INITIAL_APPOINTMENTS);
+  const [treatments, setTreatments] = useState<TreatmentHistoryRecord[]>(INITIAL_TREATMENTS);
+  const [reports, setReports] = useState<DetailedMedicalReport[]>(INITIAL_REPORTS);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Navigation State
