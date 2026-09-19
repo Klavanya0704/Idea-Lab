@@ -632,24 +632,29 @@ function DoctorDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#FAFAFF] font-sans antialiased text-foreground">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#f7f9ff_0%,#f5f3ff_45%,#f8fbff_100%)] font-sans antialiased text-slate-800 relative overflow-x-hidden">
+      {/* Background Decorative Ambient Glows */}
+      <div className="pointer-events-none fixed -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-300/15 blur-3xl z-0" />
+      <div className="pointer-events-none fixed top-1/3 -right-32 h-[600px] w-[600px] rounded-full bg-purple-300/15 blur-3xl z-0" />
+      <div className="pointer-events-none fixed bottom-10 left-1/4 h-[450px] w-[450px] rounded-full bg-pink-300/15 blur-3xl z-0" />
+
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-brand/30 bg-white p-4 shadow-xl text-xs font-semibold text-brand transition-all animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 rounded-2xl border border-brand/30 bg-white/95 backdrop-blur-md p-4 shadow-xl text-xs font-semibold text-brand transition-all animate-in fade-in slide-in-from-top-4">
           <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border/70 bg-white p-6 justify-between shrink-0 sticky top-0 h-screen">
+      <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-xl shadow-[5px_0_30px_rgba(0,0,0,0.02)] p-6 justify-between shrink-0 sticky top-0 h-screen z-20">
         <div>
           <Link to="/" className="flex items-center gap-2 px-2 transition-opacity hover:opacity-90">
-            <Logo />
+            <Logo href="" />
           </Link>
 
-          <div className="mt-4 rounded-xl border border-brand/20 bg-brand/5 px-3 py-1.5 text-center">
-            <span className="text-[11px] font-bold tracking-wider text-brand uppercase">
+          <div className="mt-4 rounded-full border border-brand/30 bg-brand/5 px-3.5 py-1.5 text-center shadow-2xs">
+            <span className="text-[11px] font-bold tracking-widest text-brand uppercase">
               DOCTOR CLINICAL PORTAL
             </span>
           </div>
@@ -657,10 +662,10 @@ function DoctorDashboardPage() {
           <nav className="mt-8 space-y-1.5">
             <button
               onClick={() => setActiveTab("dashboard")}
-              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "dashboard"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <LayoutDashboard className="h-4 w-4" /> Dashboard Overview
@@ -668,42 +673,54 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("patients")}
-              className={`flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "patients"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <span className="flex items-center gap-3">
                 <Users className="h-4 w-4" /> Patient Registry
               </span>
-              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  activeTab === "patients"
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-200/80 text-slate-700"
+                }`}
+              >
                 {stats.totalPatients}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("appointments")}
-              className={`flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "appointments"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <span className="flex items-center gap-3">
                 <Calendar className="h-4 w-4" /> Today's Schedule
               </span>
-              <span className="rounded-full bg-amber-500/20 text-amber-700 px-2 py-0.5 text-[10px] font-bold">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  activeTab === "appointments"
+                    ? "bg-white/20 text-white"
+                    : "bg-amber-500/20 text-amber-700"
+                }`}
+              >
                 {stats.todaysAptsCount}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("records")}
-              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "records"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <FolderHeart className="h-4 w-4" /> Treatment Records
@@ -711,10 +728,10 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("reports")}
-              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "reports"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <FileCheck2 className="h-4 w-4" /> Medical Reports
@@ -722,10 +739,10 @@ function DoctorDashboardPage() {
 
             <button
               onClick={() => setActiveTab("settings")}
-              className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-xs font-semibold transition-all ${
+              className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-semibold transition-all ${
                 activeTab === "settings"
-                  ? "bg-brand text-white shadow-soft"
-                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,#3158E8_0%,#7047E8_100%)] text-white shadow-[0_8px_20px_-4px_rgba(49,88,232,0.4)]"
+                  : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
               }`}
             >
               <Settings className="h-4 w-4" /> Clinic Settings
@@ -733,19 +750,19 @@ function DoctorDashboardPage() {
           </nav>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-slate-50/80 p-3.5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-md p-3.5 shadow-xs">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-brand text-white text-xs font-bold shadow-xs">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[linear-gradient(135deg,#3155D9_0%,#6B35D9_100%)] text-white text-xs font-bold shadow-xs">
               AS
             </span>
             <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-bold text-foreground truncate">Dr. Anaya Sharma</p>
-              <p className="text-[11px] text-muted-foreground truncate">Chief Dental Surgeon</p>
+              <p className="text-xs font-bold text-slate-900 truncate">Dr. Anaya Sharma</p>
+              <p className="text-[11px] text-slate-500 truncate">Chief Dental Surgeon</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-white py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
           </button>
@@ -753,35 +770,35 @@ function DoctorDashboardPage() {
       </aside>
 
       {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header Bar */}
-        <header className="sticky top-0 z-30 border-b border-border/60 bg-white/90 backdrop-blur-md px-5 py-3.5 lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-md px-5 py-3.5 lg:px-8">
           <div className="mx-auto flex max-w-[1360px] items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden grid h-9 w-9 place-items-center rounded-xl border border-border bg-slate-50 text-foreground"
+                className="lg:hidden grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs"
                 aria-label="Toggle navigation menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
               <Link to="/" className="lg:hidden">
-                <Logo />
+                <Logo href="" />
               </Link>
-              <h1 className="hidden sm:block text-base font-bold text-foreground">
+              <h1 className="hidden sm:block text-sm font-bold text-slate-900 tracking-tight">
                 SmileCare Clinical Management Portal
               </h1>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-50/80 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold text-emerald-700 shadow-2xs">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Dr. Anaya
                 Sharma (Online)
               </span>
 
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/80 backdrop-blur-sm px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white hover:text-brand transition-all shadow-xs"
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> Website
               </Link>
@@ -791,13 +808,13 @@ function DoctorDashboardPage() {
 
         {/* MOBILE SIDEBAR MENU */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-b border-border bg-white p-4 space-y-2 animate-in slide-in-from-top-2">
+          <div className="lg:hidden border-b border-slate-200 bg-white/95 backdrop-blur-md p-4 space-y-2 animate-in slide-in-from-top-2">
             <button
               onClick={() => {
                 setActiveTab("dashboard");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <LayoutDashboard className="h-4 w-4" /> Dashboard Overview
             </button>
@@ -806,7 +823,7 @@ function DoctorDashboardPage() {
                 setActiveTab("patients");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <Users className="h-4 w-4" /> Patient Registry ({stats.totalPatients})
             </button>
@@ -815,7 +832,7 @@ function DoctorDashboardPage() {
                 setActiveTab("appointments");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <Calendar className="h-4 w-4" /> Today's Schedule ({stats.todaysAptsCount})
             </button>
@@ -824,7 +841,7 @@ function DoctorDashboardPage() {
                 setActiveTab("records");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <FolderHeart className="h-4 w-4" /> Treatment Records
             </button>
@@ -833,7 +850,7 @@ function DoctorDashboardPage() {
                 setActiveTab("reports");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <FileCheck2 className="h-4 w-4" /> Medical Reports
             </button>
@@ -842,7 +859,7 @@ function DoctorDashboardPage() {
                 setActiveTab("settings");
                 setMobileMenuOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
+              className="flex w-full items-center gap-2.5 rounded-xl p-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100"
             >
               <Settings className="h-4 w-4" /> Clinic Settings
             </button>
@@ -850,11 +867,11 @@ function DoctorDashboardPage() {
         )}
 
         {/* DYNAMIC MAIN CONTENT VIEW */}
-        <main className="flex-1 p-5 sm:p-8 lg:p-10 space-y-8 max-w-[1360px] mx-auto w-full">
+        <main className="flex-1 p-5 sm:p-7 lg:p-8 space-y-6 max-w-[1360px] mx-auto w-full">
           {loadingData && (
             <div className="flex flex-col items-center justify-center p-16 text-center space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-brand" />
-              <p className="text-xs font-semibold text-muted-foreground">
+              <p className="text-xs font-semibold text-slate-500">
                 Loading clinical database records...
               </p>
             </div>
@@ -863,45 +880,67 @@ function DoctorDashboardPage() {
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {!loadingData && activeTab === "dashboard" && (
             <>
-              {/* CLEAN MEDICAL-DASHBOARD CARDS */}
+              {/* 1. DASHBOARD WELCOME SECTION */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-[22px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 shadow-[0_10px_30px_rgba(45,55,120,0.05)]">
+                <div>
+                  <span className="text-[11px] font-bold tracking-[0.2em] text-brand-purple uppercase">
+                    S M I L E C A R E &nbsp; C L I N I C A L &nbsp; D A S H B O A R D
+                  </span>
+                  <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                    Good Morning, Dr. Anaya 👋
+                  </h1>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                    Here's your clinical workspace summary and patient schedules for today.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 shrink-0">
+                  <Calendar className="h-5 w-5 text-brand" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">02 September 2026</p>
+                    <p className="text-[10px] font-medium text-slate-500">
+                      Today's Clinical Overview
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. ELEVATED STATISTICS CARDS */}
               <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Total Patients
                     </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500/15 text-blue-600">
                       <Users className="h-4 w-4" />
                     </span>
                   </div>
                   <div className="mt-2.5">
-                    <p className="font-display text-2xl font-extrabold text-foreground">
+                    <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.totalPatients}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      Registered in database
-                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Registered in database</p>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Today's Schedule
                     </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500/10 text-blue-600">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-500/15 text-indigo-600">
                       <Calendar className="h-4 w-4" />
                     </span>
                   </div>
                   <div className="mt-2.5">
-                    <p className="font-display text-2xl font-extrabold text-foreground">
+                    <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.todaysAptsCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Appointments today</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Appointments today</p>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
                       Waiting
@@ -914,13 +953,11 @@ function DoctorDashboardPage() {
                     <p className="font-display text-2xl font-extrabold text-amber-700">
                       {stats.waitingCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      In reception waiting room
-                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">In reception waiting room</p>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-purple-700 uppercase tracking-wider">
                       In Consultation
@@ -933,11 +970,11 @@ function DoctorDashboardPage() {
                     <p className="font-display text-2xl font-extrabold text-purple-700">
                       {stats.inConsultationCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Active in surgery</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Active in surgery</p>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
                       Completed Today
@@ -950,37 +987,37 @@ function DoctorDashboardPage() {
                     <p className="font-display text-2xl font-extrabold text-emerald-700">
                       {stats.completedTodayCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Finished checkups</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Finished checkups</p>
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-soft">
+                <div className="rounded-[20px] border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-[0_10px_30px_rgba(45,55,120,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-pink-700 uppercase tracking-wider">
                       Follow-ups
                     </span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-500/10 text-rose-600">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-pink-500/15 text-pink-700">
                       <Activity className="h-4 w-4" />
                     </span>
                   </div>
                   <div className="mt-2.5">
-                    <p className="font-display text-2xl font-extrabold text-foreground">
+                    <p className="font-display text-2xl font-extrabold text-slate-900">
                       {stats.upcomingFollowupsCount}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">Scheduled upcoming</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Scheduled upcoming</p>
                   </div>
                 </div>
               </section>
 
-              {/* RECENTLY REGISTERED PATIENTS & TODAY'S UPCOMING APPOINTMENTS */}
-              <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-                <div className="lg:col-span-7 rounded-[24px] border border-border/80 bg-white p-6 shadow-soft">
+              {/* 3. RECENTLY REGISTERED PATIENTS & TODAY'S UPCOMING APPOINTMENTS */}
+              <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                <div className="lg:col-span-7 rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-display text-lg font-bold text-foreground">
+                      <h2 className="font-display text-lg font-bold text-slate-900">
                         Recently Registered Patients
                       </h2>
-                      <p className="text-xs text-muted-foreground">Sorted by registration date</p>
+                      <p className="text-xs text-slate-500">Sorted by registration date</p>
                     </div>
                     <button
                       onClick={() => setActiveTab("patients")}
@@ -994,10 +1031,10 @@ function DoctorDashboardPage() {
                     {recentlyRegistered.map((patient) => (
                       <div
                         key={patient.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-slate-50/60 p-3.5 transition-all hover:bg-slate-100/80"
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 backdrop-blur-xs p-3.5 transition-all duration-200 hover:bg-white hover:shadow-md hover:-translate-y-0.5"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-brand text-white text-xs font-bold shadow-xs">
+                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[linear-gradient(135deg,#3155D9_0%,#6B35D9_100%)] text-white text-xs font-bold shadow-xs">
                             {patient.name
                               .split(" ")
                               .map((n) => n[0])
@@ -1005,14 +1042,14 @@ function DoctorDashboardPage() {
                           </span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-foreground">{patient.name}</p>
+                              <p className="text-xs font-bold text-slate-900">{patient.name}</p>
                               <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700">
                                 {patient.id}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            <p className="mt-0.5 text-[11px] text-slate-500">
                               Reg:{" "}
-                              <span className="font-medium text-foreground">
+                              <span className="font-medium text-slate-800">
                                 {formatDate(patient.registrationDate)}
                               </span>{" "}
                               • {patient.treatment}
@@ -1026,7 +1063,7 @@ function DoctorDashboardPage() {
                           </span>
                           <button
                             onClick={() => handleOpenPatientModal(patient)}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand hover:text-white transition-colors shadow-xs"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-brand hover:text-white hover:border-brand transition-colors shadow-xs"
                           >
                             <Eye className="h-3.5 w-3.5" /> View Patient
                           </button>
@@ -1036,13 +1073,13 @@ function DoctorDashboardPage() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-5 rounded-[24px] border border-border/80 bg-white p-6 shadow-soft">
+                <div className="lg:col-span-5 rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-display text-lg font-bold text-foreground">
+                      <h2 className="font-display text-lg font-bold text-slate-900">
                         Today's Schedule
                       </h2>
-                      <p className="text-xs text-muted-foreground">{formatDate("2026-09-02")}</p>
+                      <p className="text-xs text-slate-500">{formatDate("2026-09-02")}</p>
                     </div>
                     <button
                       onClick={() => setActiveTab("appointments")}
@@ -1056,15 +1093,15 @@ function DoctorDashboardPage() {
                     {todaysSchedule.map((apt) => (
                       <div
                         key={apt.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-slate-50/60 p-3.5 transition-colors hover:bg-slate-100/80"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/80 backdrop-blur-xs p-3.5 transition-all duration-200 hover:bg-white hover:shadow-xs"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-200/80 text-foreground text-xs font-bold">
+                          <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
                             <Clock className="h-4 w-4 text-brand-purple" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-foreground">{apt.patientName}</p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs font-bold text-slate-900">{apt.patientName}</p>
+                            <p className="text-[11px] text-slate-500">
                               {apt.time} • {apt.treatment}
                             </p>
                           </div>
@@ -1088,12 +1125,57 @@ function DoctorDashboardPage() {
                   </div>
                 </div>
               </section>
+
+              {/* 4. TODAY'S CLINICAL INSIGHTS */}
+              <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 text-white shadow-sm">
+                    <Users className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Patient Flow
+                    </p>
+                    <p className="text-sm font-extrabold text-slate-900">
+                      {stats.todaysAptsCount} appointments today
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-purple-600 text-white shadow-sm">
+                    <Stethoscope className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Clinical Progress
+                    </p>
+                    <p className="text-sm font-extrabold text-slate-900">
+                      {stats.inConsultationCount} consultation active
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-white/90 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-white/80 p-4.5 backdrop-blur-xl shadow-xs flex items-center gap-3.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                    <Activity className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Follow-up Care
+                    </p>
+                    <p className="text-sm font-extrabold text-slate-900">
+                      {stats.upcomingFollowupsCount} follow-ups scheduled
+                    </p>
+                  </div>
+                </div>
+              </section>
             </>
           )}
 
           {/* TAB 2: PATIENT REGISTRY */}
           {!loadingData && activeTab === "patients" && (
-            <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
+            <section className="rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-8 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
