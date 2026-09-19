@@ -637,11 +637,23 @@ function DoctorDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[linear-gradient(135deg,#f4f7ff_0%,#edf2ff_40%,#f8fbff_100%)] font-sans antialiased text-slate-800 relative overflow-x-hidden">
-      {/* Background Atmospheric Lighting Blobs */}
-      <div className="pointer-events-none fixed -top-32 -left-32 h-[600px] w-[600px] rounded-full bg-blue-400/10 blur-3xl z-0" />
-      <div className="pointer-events-none fixed top-1/3 -right-32 h-[650px] w-[650px] rounded-full bg-purple-400/10 blur-3xl z-0" />
-      <div className="pointer-events-none fixed bottom-10 left-1/4 h-[500px] w-[500px] rounded-full bg-pink-300/10 blur-3xl z-0" />
+    <div className="flex min-h-screen bg-[#F4F7FE] font-sans antialiased text-slate-800 relative overflow-x-hidden">
+      {/* 1. FULL PAGE DENTAL HOSPITAL BACKGROUND WITH FROSTED GLASS OVERLAY */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Soft Blurred Dental Clinic Interior Photo */}
+        <img
+          src={clinicBg}
+          alt="Dental Hospital Environment"
+          className="w-full h-full object-cover object-center filter blur-[12px] opacity-20 scale-105"
+        />
+        {/* Translucent Soft Frosted Glass Overlay (mostly white + pale blue + lavender hint) */}
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(245,249,255,0.78)_0%,rgba(238,244,255,0.75)_50%,rgba(248,245,255,0.78)_100%)] backdrop-blur-[14px]" />
+
+        {/* Ambient Subtle Lighting Glows */}
+        <div className="absolute -top-32 -left-32 h-[600px] w-[600px] rounded-full bg-blue-400/12 blur-3xl" />
+        <div className="absolute top-1/3 -right-32 h-[650px] w-[650px] rounded-full bg-purple-300/12 blur-3xl" />
+        <div className="absolute bottom-10 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-300/10 blur-3xl" />
+      </div>
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -652,7 +664,7 @@ function DoctorDashboardPage() {
       )}
 
       {/* 2. PREMIUM FIXED 100VH GLASS SIDEBAR */}
-      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-64 h-screen flex-col justify-between border-r border-blue-100/90 bg-white/95 backdrop-blur-2xl p-5 shadow-[6px_0_30px_rgba(49,88,232,0.04)] overflow-y-auto rounded-r-[26px]">
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 z-40 w-64 h-screen flex-col justify-between border-r border-blue-100/90 bg-white/92 backdrop-blur-2xl p-5 shadow-[6px_0_30px_rgba(49,88,232,0.04)] overflow-y-auto rounded-r-[26px]">
         <div>
           <Link to="/" className="flex items-center gap-2 px-1 transition-opacity hover:opacity-90">
             <Logo href="" />
