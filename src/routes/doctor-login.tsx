@@ -82,14 +82,14 @@ function DoctorLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-between relative font-sans antialiased text-slate-800 overflow-x-hidden">
-      {/* 1. FULL PAGE BACKGROUND: Blurred Dental Clinic Environment */}
+      {/* 1. FULL PAGE BACKGROUND: Realistic Modern Dental Hospital Interior under Frosted Glass */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <img
           src={clinicBg}
-          alt="Dental Clinic Environment"
-          className="w-full h-full object-cover object-center filter blur-[6px] scale-105 opacity-40"
+          alt="Dental Hospital Environment"
+          className="w-full h-full object-cover object-center filter blur-[5px] scale-105 opacity-85"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(244,247,255,0.85)_0%,rgba(235,241,255,0.75)_50%,rgba(245,237,254,0.85)_100%)] mix-blend-multiply" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.45)_0%,rgba(235,242,254,0.35)_50%,rgba(245,238,255,0.45)_100%)] backdrop-blur-[2px]" />
         <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-300/20 blur-3xl" />
         <div className="absolute top-1/3 -right-32 h-[600px] w-[600px] rounded-full bg-purple-300/20 blur-3xl" />
       </div>
@@ -285,7 +285,7 @@ function DoctorLoginPage() {
         </div>
 
         {/* 12. RIGHT LOGIN PANEL */}
-        <div className="rounded-[28px] bg-white border border-slate-100 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.18)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
+        <div className="rounded-[28px] bg-white/85 backdrop-blur-xl border border-white/80 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.18)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
           <div className="max-w-[420px] mx-auto w-full flex-1 flex flex-col justify-center">
             {/* 13. Login Header */}
             <div>
