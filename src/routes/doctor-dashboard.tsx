@@ -1467,7 +1467,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 2: PATIENT REGISTRY */}
-          {!loadingData && activeTab === "patients" && (
+          {!isSyncing && activeTab === "patients" && (
             <section className="rounded-[24px] border border-white/90 bg-white/75 backdrop-blur-xl p-6 sm:p-8 shadow-[0_12px_35px_rgba(40,50,120,0.06)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -1653,7 +1653,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 3: TODAY'S SCHEDULE */}
-          {!loadingData && activeTab === "appointments" && (
+          {!isSyncing && activeTab === "appointments" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1754,7 +1754,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 4: TREATMENT RECORDS */}
-          {!loadingData && activeTab === "records" && (
+          {!isSyncing && activeTab === "records" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1830,7 +1830,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 5: MEDICAL REPORTS */}
-          {!loadingData && activeTab === "reports" && (
+          {!isSyncing && activeTab === "reports" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <div className="flex items-center justify-between">
                 <div>
@@ -1908,7 +1908,7 @@ function DoctorDashboardPage() {
           )}
 
           {/* TAB 6: CLINIC SETTINGS */}
-          {!loadingData && activeTab === "settings" && (
+          {!isSyncing && activeTab === "settings" && (
             <section className="rounded-[24px] border border-border/80 bg-white p-6 sm:p-8 shadow-soft">
               <h2 className="font-display text-xl font-bold text-foreground">
                 Clinic Settings & System Management
