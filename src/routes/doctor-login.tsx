@@ -129,17 +129,13 @@ function DoctorLoginPage() {
 
       {/* 3. MAIN CONTENT CONTAINER: 61% Left Hero / 39% Right Login */}
       <main className="relative z-10 w-full max-w-[1420px] mx-auto px-4 sm:px-6 my-2 sm:my-4 flex-1 grid lg:grid-cols-[1.55fr_1fr] gap-5 items-stretch">
-        {/* 4. LEFT HERO PANEL */}
-        <div className="relative rounded-[28px] overflow-hidden border border-white/80 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.25)] p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between">
-          {/* Dental clinic photo inside hero panel under gradient */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <img
-              src={clinicBg}
-              alt="Clinic Background"
-              className="w-full h-full object-cover filter blur-[3px] scale-105 opacity-30"
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(49,85,217,0.92)_0%,rgba(79,54,221,0.88)_35%,rgba(123,59,219,0.88)_70%,rgba(216,60,207,0.92)_100%)]" />
-          </div>
+        {/* 4. LEFT HERO PANEL: Translucent Purple Glass Panel */}
+        <div className="relative rounded-[24px] sm:rounded-[28px] overflow-hidden border border-white/45 bg-[rgba(65,60,215,0.42)] backdrop-blur-[24px] backdrop-saturate-[140%] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_20px_50px_rgba(0,0,0,0.15)] p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between">
+          {/* Translucent purple/blue gradient overlay */}
+          <div className="absolute inset-0 z-0 pointer-events-none bg-[linear-gradient(135deg,rgba(75,70,220,0.48)_0%,rgba(115,55,220,0.42)_50%,rgba(215,60,205,0.46)_100%)]" />
+
+          {/* Top/Left subtle glass edge shine highlight */}
+          <div className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent z-10" />
 
           {/* Ambient Glows inside hero */}
           <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl z-0" />
@@ -181,7 +177,7 @@ function DoctorLoginPage() {
           <div className="relative z-20 my-6 grid sm:grid-cols-2 gap-4 items-end flex-1">
             {/* 8. Light Translucent Feature Cards Stack */}
             <div className="space-y-3 max-w-[310px] z-20">
-              <div className="group bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-sm hover:bg-white/30 transition-all">
+              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Users className="h-5 w-5" />
                 </div>
@@ -195,7 +191,7 @@ function DoctorLoginPage() {
                 </div>
               </div>
 
-              <div className="group bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-sm hover:bg-white/30 transition-all">
+              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Calendar className="h-5 w-5" />
                 </div>
@@ -209,7 +205,7 @@ function DoctorLoginPage() {
                 </div>
               </div>
 
-              <div className="group bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-sm hover:bg-white/30 transition-all">
+              <div className="group bg-white/18 backdrop-blur-md border border-white/35 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3.5 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)] hover:bg-white/28 transition-all">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
                   <Activity className="h-5 w-5" />
                 </div>
@@ -284,8 +280,8 @@ function DoctorLoginPage() {
           </div>
         </div>
 
-        {/* 12. RIGHT LOGIN PANEL */}
-        <div className="rounded-[28px] bg-white/85 backdrop-blur-xl border border-white/80 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.18)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
+        {/* 12. RIGHT LOGIN PANEL: Translucent Frosted White Glass Panel */}
+        <div className="rounded-[24px] sm:rounded-[28px] bg-white/60 backdrop-blur-[26px] backdrop-saturate-[135%] border border-white/70 shadow-[inset_0_1px_2px_rgba(255,255,255,0.85),0_20px_50px_rgba(0,0,0,0.08)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
           <div className="max-w-[420px] mx-auto w-full flex-1 flex flex-col justify-center">
             {/* 13. Login Header */}
             <div>
@@ -340,7 +336,7 @@ function DoctorLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="doctor@smilecare.com"
-                    className="w-full rounded-2xl border border-blue-100 bg-slate-50/60 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand/10"
+                    className="w-full rounded-2xl border border-white/70 bg-white/50 backdrop-blur-sm py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white/80 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
                   />
                 </div>
               </div>
@@ -364,7 +360,7 @@ function DoctorLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full rounded-2xl border border-blue-100 bg-slate-50/60 py-3.5 pl-11 pr-11 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand/10"
+                    className="w-full rounded-2xl border border-white/70 bg-white/50 backdrop-blur-sm py-3.5 pl-11 pr-11 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-brand focus:bg-white/80 focus:outline-none focus:ring-4 focus:ring-brand/10 shadow-xs"
                   />
                   <button
                     type="button"
@@ -420,12 +416,14 @@ function DoctorLoginPage() {
             </form>
 
             {/* 18. OR Divider */}
-            <div className="relative my-5 text-center text-xs text-slate-400 before:content-[''] before:absolute before:left-0 before:top-1/2 before:w-full before:h-px before:bg-slate-200">
-              <span className="relative z-10 bg-white px-3 font-medium text-slate-400">OR</span>
+            <div className="relative my-5 text-center text-xs text-slate-400 before:content-[''] before:absolute before:left-0 before:top-1/2 before:w-full before:h-px before:bg-slate-200/80">
+              <span className="relative z-10 bg-white/70 backdrop-blur-xs px-3 py-0.5 rounded-full border border-white/60 font-medium text-slate-500 shadow-2xs">
+                OR
+              </span>
             </div>
 
             {/* 19. Security Card */}
-            <div className="rounded-2xl bg-[#F0F5FF] border border-blue-100 p-3.5 flex items-center gap-3">
+            <div className="rounded-2xl bg-white/50 backdrop-blur-sm border border-white/70 p-3.5 flex items-center gap-3 shadow-xs">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-xs">
                 <ShieldCheck className="h-4 w-4" />
               </span>
