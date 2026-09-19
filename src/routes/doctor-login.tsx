@@ -87,7 +87,7 @@ function DoctorLoginPage() {
         <img
           src={clinicBg}
           alt="Dental Clinic Environment"
-          className="w-full h-full object-cover object-center filter blur-[5px] scale-105 opacity-40"
+          className="w-full h-full object-cover object-center filter blur-[6px] scale-105 opacity-40"
         />
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(244,247,255,0.85)_0%,rgba(235,241,255,0.75)_50%,rgba(245,237,254,0.85)_100%)] mix-blend-multiply" />
         <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-300/20 blur-3xl" />
@@ -127,13 +127,23 @@ function DoctorLoginPage() {
         </div>
       </header>
 
-      {/* 3. MAIN CONTENT CONTAINER: 60% Left Hero / 40% Right Login */}
-      <main className="relative z-10 w-full max-w-[1420px] mx-auto px-4 sm:px-6 my-2 sm:my-4 flex-1 grid lg:grid-cols-[1.52fr_1fr] gap-6 items-stretch">
+      {/* 3. MAIN CONTENT CONTAINER: 61% Left Hero / 39% Right Login */}
+      <main className="relative z-10 w-full max-w-[1420px] mx-auto px-4 sm:px-6 my-2 sm:my-4 flex-1 grid lg:grid-cols-[1.55fr_1fr] gap-5 items-stretch">
         {/* 4. LEFT HERO PANEL */}
-        <div className="relative rounded-[32px] overflow-hidden border border-white/80 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.25)] bg-[linear-gradient(135deg,rgba(49,85,217,0.92)_0%,rgba(79,54,221,0.88)_35%,rgba(123,59,219,0.88)_70%,rgba(216,60,207,0.92)_100%)] p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between">
+        <div className="relative rounded-[28px] overflow-hidden border border-white/80 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.25)] p-7 sm:p-10 lg:p-12 text-white flex flex-col justify-between">
+          {/* Dental clinic photo inside hero panel under gradient */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <img
+              src={clinicBg}
+              alt="Clinic Background"
+              className="w-full h-full object-cover filter blur-[3px] scale-105 opacity-30"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(49,85,217,0.92)_0%,rgba(79,54,221,0.88)_35%,rgba(123,59,219,0.88)_70%,rgba(216,60,207,0.92)_100%)]" />
+          </div>
+
           {/* Ambient Glows inside hero */}
-          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-1/3 right-0 h-80 w-80 rounded-full bg-pink-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl z-0" />
+          <div className="pointer-events-none absolute bottom-1/3 right-0 h-80 w-80 rounded-full bg-pink-400/20 blur-3xl z-0" />
 
           {/* Top Row: Portal Label & Handwritten Script */}
           <div className="relative z-20 flex items-start justify-between">
@@ -224,16 +234,16 @@ function DoctorLoginPage() {
               </div>
             </div>
 
-            {/* 5. Doctor Image: Female Dentist in White Coat over Blue Scrubs */}
-            <div className="relative flex items-end justify-center h-full min-h-[300px]">
+            {/* 5. Doctor Image: Clean Integrated Dentist with White Coat & Blue Scrubs */}
+            <div className="relative flex items-end justify-center h-full min-h-[320px]">
               <img
                 src={doctorPortrait}
                 alt="SmileCare Specialist Doctor"
-                className="absolute bottom-0 right-0 sm:-right-4 w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[460px] h-auto object-contain object-bottom pointer-events-none z-10 drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)]"
+                className="absolute bottom-0 right-0 sm:-right-2 w-full max-w-[340px] sm:max-w-[410px] lg:max-w-[450px] h-auto object-contain object-bottom pointer-events-none z-10 mix-blend-multiply drop-shadow-[0_20px_35px_rgba(0,0,0,0.3)] [mask-image:linear-gradient(to_bottom,black_82%,transparent_100%)]"
               />
 
               {/* 10. Floating Doctor Badge */}
-              <div className="absolute right-2 bottom-12 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/40 bg-white/85 backdrop-blur-md p-3 text-slate-900 shadow-xl max-w-[210px]">
+              <div className="absolute right-2 bottom-12 z-20 hidden sm:flex items-center gap-3 rounded-2xl border border-white/40 bg-white/90 backdrop-blur-md p-3 text-slate-900 shadow-xl max-w-[210px]">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-sm">
                   <ToothIcon className="h-5 w-5" />
                 </span>
@@ -275,7 +285,7 @@ function DoctorLoginPage() {
         </div>
 
         {/* 12. RIGHT LOGIN PANEL */}
-        <div className="rounded-[32px] bg-white border border-slate-100 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.18)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
+        <div className="rounded-[28px] bg-white border border-slate-100 shadow-[0_25px_70px_-15px_rgba(49,85,217,0.18)] p-7 sm:p-10 lg:p-12 flex flex-col justify-between">
           <div className="max-w-[420px] mx-auto w-full flex-1 flex flex-col justify-center">
             {/* 13. Login Header */}
             <div>
