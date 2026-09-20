@@ -18,7 +18,6 @@ export function PrescriptionPrintViewer({
   onClose,
 }: PrescriptionPrintViewerProps) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [debugStatus, setDebugStatus] = useState<string | null>(null);
   const prescriptionRef = useRef<HTMLDivElement>(null);
 
   const formatDate = (dateStr?: string) => {
@@ -72,14 +71,11 @@ export function PrescriptionPrintViewer({
   };
 
   const triggerBlobDownload = (blob: Blob, fileName: string) => {
-    console.log("[PDF] Attempting download for:", fileName, "Blob size:", blob.size);
-    setDebugStatus(`Blob size: ${blob.size} bytes. Triggering download...`);
-
     if (!blob || blob.size === 0) {
       throw new Error("Generated Blob is empty (0 bytes)");
     }
 
-    // Strategy 1: standard object URL anchor click
+    // Strategy 1: Standard object URL anchor click
     try {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -88,19 +84,16 @@ export function PrescriptionPrintViewer({
       a.rel = "noopener";
       a.style.display = "none";
       document.body.appendChild(a);
-      console.log("[PDF] Triggering anchor click for:", fileName);
       a.click();
       document.body.removeChild(a);
 
       setTimeout(() => {
         URL.revokeObjectURL(url);
-        console.log("[PDF] Object URL revoked");
       }, 2000);
 
-      setDebugStatus(`Downloaded ${fileName} (${blob.size} bytes)`);
       return;
     } catch (e1) {
-      console.warn("[PDF] Object URL anchor click failed:", e1);
+      console.warn("[PDF Download] Object URL anchor click failed:", e1);
     }
 
     // Strategy 2: FileReader Data URL anchor fallback
@@ -115,79 +108,34 @@ export function PrescriptionPrintViewer({
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        console.log("[PDF] Data URL anchor download triggered for:", fileName);
-        setDebugStatus(`Downloaded via Data URL ${fileName}`);
       };
       reader.readAsDataURL(blob);
       return;
     } catch (e2) {
-      console.warn("[PDF] Data URL anchor download failed:", e2);
+      console.warn("[PDF Download] Data URL anchor download failed:", e2);
     }
 
     throw new Error("All download strategies failed in this browser environment.");
   };
 
-  const handleTestTxtDownload = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("[PDF] TEST DIRECT TXT DOWNLOAD clicked");
-    setDebugStatus("Starting TXT test download...");
-    try {
-      const blob = new Blob(["SmileCare PDF Download Diagnostic Test"], { type: "text/plain" });
-      triggerBlobDownload(blob, "SmileCare-download-test.txt");
-    } catch (err) {
-      console.error("[PDF ERROR] TXT test download failed:", err);
-      setDebugStatus(`TXT Test Failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  };
-
-  const handleTestPdfDownload = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("[PDF] TEST DIRECT PDF DOWNLOAD clicked");
-    setDebugStatus("Starting jsPDF test download...");
-    try {
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      pdf.setFontSize(16);
-      pdf.text("SmileCare Dental Hospital", 20, 20);
-      pdf.setFontSize(12);
-      pdf.text("Diagnostic PDF Download Test Document", 20, 30);
-      const blob = pdf.output("blob");
-      triggerBlobDownload(blob, "SmileCare-PDF-test.pdf");
-    } catch (err) {
-      console.error("[PDF ERROR] PDF test download failed:", err);
-      setDebugStatus(`PDF Test Failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  };
-
   const handleDownloadPDF = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
-    console.log("[PDF] Download button clicked");
-    setDebugStatus("Starting PDF generation...");
 
     const element =
       prescriptionRef.current || document.getElementById("smilecare-prescription-document");
     if (!element) {
-      console.error("[PDF ERROR] Prescription document element not found");
-      setDebugStatus("Error: Prescription element not found");
       toast.error("Unable to generate PDF. Please try again.");
       return;
     }
 
     try {
       setIsDownloading(true);
-      console.log("[PDF] Prescription element found:", element);
-      console.log(
-        "[PDF] Element dimensions: scrollWidth=",
-        element.scrollWidth,
-        "scrollHeight=",
-        element.scrollHeight,
-      );
-      setDebugStatus("Capturing document canvas...");
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        logging: true,
+        logging: false,
         backgroundColor: "#ffffff",
         scrollX: 0,
         scrollY: 0,
@@ -204,9 +152,6 @@ export function PrescriptionPrintViewer({
         },
       });
 
-      console.log("[PDF] Canvas generated. Dimensions:", canvas.width, "x", canvas.height);
-      setDebugStatus(`Canvas captured (${canvas.width}x${canvas.height}). Generating PDF...`);
-
       const imgData = canvas.toDataURL("image/png");
 
       const pdf = new jsPDF({
@@ -222,7 +167,6 @@ export function PrescriptionPrintViewer({
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
       const totalPages = Math.ceil(imgHeight / pdfHeight);
-      console.log("[PDF] PDF object generated. Pages:", totalPages);
 
       for (let i = 0; i < totalPages; i++) {
         if (i > 0) {
@@ -237,18 +181,15 @@ export function PrescriptionPrintViewer({
       const fileName = `SmileCare-Prescription-${safeId}.pdf`;
 
       const blob = pdf.output("blob");
-      console.log("[PDF] Blob generated. Size:", blob.size, "bytes");
 
       if (!blob || blob.size === 0) {
-        throw new Error("Generated PDF is empty (0 bytes)");
+        throw new Error("Generated PDF blob is empty (0 bytes)");
       }
 
       triggerBlobDownload(blob, fileName);
     } catch (err) {
-      console.error("[PDF ERROR]", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setDebugStatus(`PDF Error: ${msg}`);
-      toast.error(`Unable to generate PDF: ${msg}`);
+      console.error("[PDF Generation Error]:", err);
+      toast.error("Unable to generate PDF. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -258,35 +199,14 @@ export function PrescriptionPrintViewer({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto no-print-bg animate-in fade-in">
       <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* MODAL CONTROL BAR (Hidden during print) */}
-        <div className="no-print flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3.5 gap-2">
+        <div className="no-print flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3.5">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-brand animate-pulse" />
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
               SmileCare Clinical Prescription Preview
             </h3>
-            {debugStatus && (
-              <span className="ml-2 text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">
-                {debugStatus}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleTestTxtDownload}
-              className="px-2 py-1 text-[10px] font-mono font-bold bg-amber-100 text-amber-900 rounded border border-amber-300 hover:bg-amber-200"
-              title="Test direct text blob download"
-            >
-              [ TEST TXT ]
-            </button>
-            <button
-              type="button"
-              onClick={handleTestPdfDownload}
-              className="px-2 py-1 text-[10px] font-mono font-bold bg-purple-100 text-purple-900 rounded border border-purple-300 hover:bg-purple-200"
-              title="Test direct jsPDF blob download"
-            >
-              [ TEST PDF ]
-            </button>
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={handlePrint}
