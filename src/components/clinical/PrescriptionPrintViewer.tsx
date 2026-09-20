@@ -1,8 +1,5 @@
-import React, { useState, useRef } from "react";
-import { Printer, X, Download, Loader2 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { toast } from "sonner";
+import React, { useRef } from "react";
+import { Printer, X } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import type { PrescriptionRecord, PatientRecord } from "@/lib/clinicalStore";
 
@@ -17,7 +14,6 @@ export function PrescriptionPrintViewer({
   patient,
   onClose,
 }: PrescriptionPrintViewerProps) {
-  const [isDownloading, setIsDownloading] = useState(false);
   const prescriptionRef = useRef<HTMLDivElement>(null);
 
   const formatDate = (dateStr?: string) => {
@@ -70,131 +66,6 @@ export function PrescriptionPrintViewer({
     window.print();
   };
 
-  const triggerBlobDownload = (blob: Blob, fileName: string) => {
-    if (!blob || blob.size === 0) {
-      throw new Error("Generated Blob is empty (0 bytes)");
-    }
-
-    // Strategy 1: Standard object URL anchor click
-    try {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.rel = "noopener";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 2000);
-
-      return;
-    } catch (e1) {
-      console.warn("[PDF Download] Object URL anchor click failed:", e1);
-    }
-
-    // Strategy 2: FileReader Data URL anchor fallback
-    try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = fileName;
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
-      reader.readAsDataURL(blob);
-      return;
-    } catch (e2) {
-      console.warn("[PDF Download] Data URL anchor download failed:", e2);
-    }
-
-    throw new Error("All download strategies failed in this browser environment.");
-  };
-
-  const handleDownloadPDF = async (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-
-    const element =
-      prescriptionRef.current || document.getElementById("smilecare-prescription-document");
-    if (!element) {
-      toast.error("Unable to generate PDF. Please try again.");
-      return;
-    }
-
-    try {
-      setIsDownloading(true);
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth || document.documentElement.scrollWidth,
-        windowHeight: element.scrollHeight || document.documentElement.scrollHeight,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.getElementById("smilecare-prescription-document");
-          if (clonedElement) {
-            clonedElement.style.maxHeight = "none";
-            clonedElement.style.height = "auto";
-            clonedElement.style.overflow = "visible";
-            clonedElement.style.position = "static";
-          }
-        },
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      const totalPages = Math.ceil(imgHeight / pdfHeight);
-
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        const yPosition = -(i * pdfHeight);
-        pdf.addImage(imgData, "PNG", 0, yPosition, imgWidth, imgHeight);
-      }
-
-      const rawId = prescription.id || prescription.patientId || "RX";
-      const safeId = String(rawId).replace(/[^a-zA-Z0-9_-]/g, "_");
-      const fileName = `SmileCare-Prescription-${safeId}.pdf`;
-
-      const blob = pdf.output("blob");
-
-      if (!blob || blob.size === 0) {
-        throw new Error("Generated PDF blob is empty (0 bytes)");
-      }
-
-      triggerBlobDownload(blob, fileName);
-    } catch (err) {
-      console.error("[PDF Generation Error]:", err);
-      toast.error("Unable to generate PDF. Please try again.");
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto no-print-bg animate-in fade-in">
       <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -213,22 +84,6 @@ export function PrescriptionPrintViewer({
               className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-brand/90 transition-colors"
             >
               <Printer className="h-3.5 w-3.5" /> Print Prescription
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isDownloading ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" /> Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="h-3.5 w-3.5" /> Download PDF
-                </>
-              )}
             </button>
             <button
               type="button"
