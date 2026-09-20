@@ -1,5 +1,7 @@
-import React from "react";
-import { Printer, X, Download } from "lucide-react";
+import React, { useState } from "react";
+import { Printer, X, Download, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Logo } from "@/components/site/Logo";
 import type { PrescriptionRecord, PatientRecord } from "@/lib/clinicalStore";
 
@@ -14,6 +16,8 @@ export function PrescriptionPrintViewer({
   patient,
   onClose,
 }: PrescriptionPrintViewerProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
     const date = new Date(dateStr);
@@ -26,11 +30,91 @@ export function PrescriptionPrintViewer({
   };
 
   const handlePrint = () => {
+    const target = document.getElementById("smilecare-prescription-document");
+    if (!target) {
+      window.print();
+      return;
+    }
+
+    // Clean up any pre-existing print root
+    const existingPrintRoot = document.getElementById("smilecare-print-root");
+    if (existingPrintRoot) {
+      existingPrintRoot.remove();
+    }
+
+    // Create top-level print root outside fixed overlay wrappers
+    const printRoot = document.createElement("div");
+    printRoot.id = "smilecare-print-root";
+    const clone = target.cloneNode(true) as HTMLElement;
+    printRoot.appendChild(clone);
+
+    document.body.appendChild(printRoot);
+    document.body.classList.add("body-printing-prescription");
+
+    const cleanup = () => {
+      document.body.classList.remove("body-printing-prescription");
+      if (document.body.contains(printRoot)) {
+        document.body.removeChild(printRoot);
+      }
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    window.addEventListener("afterprint", cleanup);
+
+    // Fallback cleanup timer in case afterprint event is delayed
+    setTimeout(cleanup, 2000);
+
     window.print();
   };
 
-  const handleDownloadPdf = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    const element = document.getElementById("smilecare-prescription-document");
+    if (!element) return;
+
+    try {
+      setIsDownloading(true);
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const safeRxId = (prescription.id || "RX").replace(/[^a-zA-Z0-9_-]/g, "_");
+      pdf.save(`SmileCare-Prescription-${safeRxId}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF document:", err);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -53,9 +137,18 @@ export function PrescriptionPrintViewer({
             </button>
             <button
               onClick={handleDownloadPdf}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 transition-colors"
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Download className="h-3.5 w-3.5" /> Download PDF
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" /> Downloading PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="h-3.5 w-3.5" /> Download PDF
+                </>
+              )}
             </button>
             <button
               onClick={onClose}
@@ -68,7 +161,10 @@ export function PrescriptionPrintViewer({
         </div>
 
         {/* PRINTABLE A4 PRESCRIPTION CONTAINER */}
-        <div className="printable-prescription-area overflow-y-auto p-8 sm:p-10 bg-white text-slate-900 font-sans text-xs leading-normal select-text flex-1">
+        <div
+          id="smilecare-prescription-document"
+          className="printable-prescription-area overflow-y-auto p-8 sm:p-10 bg-white text-slate-900 font-sans text-xs leading-normal select-text flex-1"
+        >
           {/* 1. HEADER */}
           <div className="flex items-start justify-between border-b-2 border-brand/80 pb-4 mb-5">
             <div className="flex items-center gap-3">
