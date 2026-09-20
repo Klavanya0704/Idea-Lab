@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Printer, X, Download, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { toast } from "sonner";
 import { Logo } from "@/components/site/Logo";
 import type { PrescriptionRecord, PatientRecord } from "@/lib/clinicalStore";
 
@@ -17,6 +18,7 @@ export function PrescriptionPrintViewer({
   onClose,
 }: PrescriptionPrintViewerProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const prescriptionRef = useRef<HTMLDivElement>(null);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
@@ -30,7 +32,8 @@ export function PrescriptionPrintViewer({
   };
 
   const handlePrint = () => {
-    const target = document.getElementById("smilecare-prescription-document");
+    const target =
+      prescriptionRef.current || document.getElementById("smilecare-prescription-document");
     if (!target) {
       window.print();
       return;
@@ -67,9 +70,13 @@ export function PrescriptionPrintViewer({
     window.print();
   };
 
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById("smilecare-prescription-document");
-    if (!element) return;
+  const handleDownloadPDF = async () => {
+    const element =
+      prescriptionRef.current || document.getElementById("smilecare-prescription-document");
+    if (!element) {
+      toast.error("Unable to generate the PDF. Please try again.");
+      return;
+    }
 
     try {
       setIsDownloading(true);
@@ -77,8 +84,19 @@ export function PrescriptionPrintViewer({
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
         backgroundColor: "#ffffff",
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById("smilecare-prescription-document");
+          if (clonedElement) {
+            clonedElement.style.maxHeight = "none";
+            clonedElement.style.height = "auto";
+            clonedElement.style.overflow = "visible";
+          }
+        },
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -95,23 +113,24 @@ export function PrescriptionPrintViewer({
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      const totalPages = Math.ceil(imgHeight / pdfHeight);
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        const yPosition = -(i * pdfHeight);
+        pdf.addImage(imgData, "PNG", 0, yPosition, imgWidth, imgHeight);
       }
 
-      const safeRxId = (prescription.id || "RX").replace(/[^a-zA-Z0-9_-]/g, "_");
-      pdf.save(`SmileCare-Prescription-${safeRxId}.pdf`);
+      const rawId = prescription.id || prescription.patientId || "RX";
+      const safeId = String(rawId).replace(/[^a-zA-Z0-9_-]/g, "_");
+      const fileName = `SmileCare-Prescription-${safeId}.pdf`;
+
+      pdf.save(fileName);
     } catch (err) {
       console.error("Failed to generate PDF document:", err);
+      toast.error("Unable to generate the PDF. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -136,13 +155,13 @@ export function PrescriptionPrintViewer({
               <Printer className="h-3.5 w-3.5" /> Print Prescription
             </button>
             <button
-              onClick={handleDownloadPdf}
+              onClick={handleDownloadPDF}
               disabled={isDownloading}
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isDownloading ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" /> Downloading PDF...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" /> Generating PDF...
                 </>
               ) : (
                 <>
@@ -162,6 +181,7 @@ export function PrescriptionPrintViewer({
 
         {/* PRINTABLE A4 PRESCRIPTION CONTAINER */}
         <div
+          ref={prescriptionRef}
           id="smilecare-prescription-document"
           className="printable-prescription-area overflow-y-auto p-8 sm:p-10 bg-white text-slate-900 font-sans text-xs leading-normal select-text flex-1"
         >
