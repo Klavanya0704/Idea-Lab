@@ -71,15 +71,18 @@ export function PrescriptionPrintViewer({
   };
 
   const handleDownloadPDF = async () => {
+    console.log("[PDF] Download button clicked");
     const element =
       prescriptionRef.current || document.getElementById("smilecare-prescription-document");
     if (!element) {
-      toast.error("Unable to generate the PDF. Please try again.");
+      console.error("[PDF ERROR] Prescription document element not found");
+      toast.error("Unable to generate PDF. Please try again.");
       return;
     }
 
     try {
       setIsDownloading(true);
+      console.log("[PDF] Prescription element found:", element);
 
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -87,17 +90,22 @@ export function PrescriptionPrintViewer({
         allowTaint: true,
         logging: false,
         backgroundColor: "#ffffff",
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth || document.documentElement.scrollWidth,
+        windowHeight: element.scrollHeight || document.documentElement.scrollHeight,
         onclone: (clonedDoc) => {
           const clonedElement = clonedDoc.getElementById("smilecare-prescription-document");
           if (clonedElement) {
             clonedElement.style.maxHeight = "none";
             clonedElement.style.height = "auto";
             clonedElement.style.overflow = "visible";
+            clonedElement.style.position = "static";
           }
         },
       });
+
+      console.log("[PDF] Canvas generated. Dimensions:", canvas.width, "x", canvas.height);
 
       const imgData = canvas.toDataURL("image/png");
 
@@ -114,6 +122,7 @@ export function PrescriptionPrintViewer({
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
       const totalPages = Math.ceil(imgHeight / pdfHeight);
+      console.log("[PDF] PDF object generated. Pages:", totalPages);
 
       for (let i = 0; i < totalPages; i++) {
         if (i > 0) {
@@ -127,10 +136,31 @@ export function PrescriptionPrintViewer({
       const safeId = String(rawId).replace(/[^a-zA-Z0-9_-]/g, "_");
       const fileName = `SmileCare-Prescription-${safeId}.pdf`;
 
-      pdf.save(fileName);
+      const blob = pdf.output("blob");
+      console.log("[PDF] Blob generated. Size:", blob.size, "bytes");
+
+      if (!blob || blob.size === 0) {
+        throw new Error("Generated PDF is empty (0 bytes)");
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+      console.log("[PDF] Triggering file download for:", fileName);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        console.log("[PDF] Download completed & object URL revoked");
+      }, 1000);
     } catch (err) {
-      console.error("Failed to generate PDF document:", err);
-      toast.error("Unable to generate the PDF. Please try again.");
+      console.error("[PDF ERROR]", err);
+      toast.error("Unable to generate PDF. Please try again.");
     } finally {
       setIsDownloading(false);
     }
