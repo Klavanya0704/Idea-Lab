@@ -228,3 +228,46 @@
     display: none;
   }
 }
+
+/* PRINT PRESCRIPTION DEDICATED STYLES */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all dashboard chrome, navigation, headers, sidebars, background overlays, modals */
+  header,
+  aside,
+  footer,
+  nav,
+  button,
+  .no-print,
+  .no-print-bg {
+    display: none !important;
+  }
+
+  /* Ensure printable area occupies full page cleanly */
+  .printable-prescription-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+}
+

@@ -46,6 +46,7 @@ import {
 import clinicBg from "@/assets/clinic-background.jpg";
 import doctorCutout from "@/assets/doctor-cutout.png";
 import { Logo, ToothIcon } from "@/components/site/Logo";
+import { PrescriptionPrintViewer } from "@/components/clinical/PrescriptionPrintViewer";
 import {
   fetchPatientsFromSupabase,
   fetchTodaysAppointmentsFromSupabase,
@@ -2577,14 +2578,14 @@ function DoctorDashboardPage() {
                     <button
                       onClick={() =>
                         setPrintingRx({
-                          id: "RX-" + selectedPatient.id,
+                          id: "RX-" + selectedPatient.id + "-" + Date.now().toString().slice(-4),
                           patientId: selectedPatient.id,
                           patientName: selectedPatient.name,
                           date: "2026-09-02",
                           doctor: "Dr. Anaya Sharma",
                           medicines,
-                          diagnosis,
-                          notes: observations,
+                          diagnosis: diagnosis || "General Dental Consultation",
+                          notes: observations || treatmentNotes,
                         })
                       }
                       className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-5 py-2.5 text-xs font-semibold text-foreground hover:bg-slate-100"
@@ -3031,76 +3032,11 @@ function DoctorDashboardPage() {
 
       {/* PRINT PRESCRIPTION PREVIEW MODAL */}
       {printingRx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-white p-8 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
-              <Logo />
-              <div className="text-right">
-                <p className="text-xs font-bold text-brand-purple">
-                  SMILECARE CLINICAL PRESCRIPTION
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  Date: {formatDate(printingRx.date)}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 p-4 text-xs space-y-1">
-              <p>
-                <span className="font-semibold text-muted-foreground">Patient Name:</span>{" "}
-                <span className="font-bold text-foreground">{printingRx.patientName}</span>
-              </p>
-              <p>
-                <span className="font-semibold text-muted-foreground">Patient ID:</span>{" "}
-                <span className="font-mono font-bold text-brand">{printingRx.patientId}</span>
-              </p>
-              <p>
-                <span className="font-semibold text-muted-foreground">Prescribing Doctor:</span>{" "}
-                <span className="font-bold text-foreground">{printingRx.doctor}</span>
-              </p>
-              {printingRx.diagnosis && (
-                <p>
-                  <span className="font-semibold text-muted-foreground">Diagnosis:</span>{" "}
-                  <span className="font-medium text-foreground">{printingRx.diagnosis}</span>
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                Prescribed Medicines
-              </h5>
-              <div className="divide-y divide-border border rounded-xl overflow-hidden text-xs">
-                {printingRx.medicines.map((m, i) => (
-                  <div key={i} className="p-3 bg-white space-y-0.5">
-                    <p className="font-bold text-foreground">
-                      {i + 1}. {m.medicine} ({m.dosage})
-                    </p>
-                    <p className="text-muted-foreground">
-                      {m.frequency} for {m.duration} —{" "}
-                      <span className="italic">{m.instructions}</span>
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-border">
-              <button
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2 text-xs font-semibold text-white shadow-soft"
-              >
-                <Printer className="h-4 w-4" /> Print Now
-              </button>
-              <button
-                onClick={() => setPrintingRx(null)}
-                className="rounded-full border border-border px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <PrescriptionPrintViewer
+          prescription={printingRx}
+          patient={selectedPatient || patients.find((p) => p.id === printingRx.patientId)}
+          onClose={() => setPrintingRx(null)}
+        />
       )}
     </div>
   );
